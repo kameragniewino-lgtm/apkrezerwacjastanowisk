@@ -1,7 +1,17 @@
 @inherits LayoutComponentBase
 
 <div class="top-bar">
-    🎣 Łowisko Gniewino — Rezerwacja Stanowisk
+    <div class="top-bar-inner">
+        <a href="/" class="top-logo">🎣 Łowisko Gniewino</a>
+        <nav class="top-nav">
+            <a href="/">Mapa</a>
+            <a href="/cennik">Cennik</a>
+            <a href="/regulamin">Regulamin</a>
+            <a href="/galeria">Galeria</a>
+            <a href="/kontakt">Kontakt</a>
+        </nav>
+        <button class="hamburger" onclick="this.closest('.top-bar').classList.toggle('open')">☰</button>
+    </div>
 </div>
 <div class="main-content">
     @Body

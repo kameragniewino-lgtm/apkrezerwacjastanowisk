@@ -1,0 +1,52 @@
+@page "/kontakt"
+
+<div class="page-kontakt">
+    <h2>📍 Kontakt i dojazd</h2>
+
+    <div class="kontakt-grid">
+        <div class="kontakt-info">
+            <h3>🎣 Łowisko Gniewino</h3>
+            <div class="kontakt-row">📍 ul. Wędkarska 1, 84-250 Gniewino</div>
+            <div class="kontakt-row">📞 <a href="tel:+48123456789">+48 123 456 789</a></div>
+            <div class="kontakt-row">📧 <a href="mailto:kontakt@lowisko-gniewino.pl">kontakt@lowisko-gniewino.pl</a></div>
+            <div class="kontakt-row">🕐 Czynne: 6:00 – 21:00 (sezon kwiecień – październik)</div>
+
+            <h3 style="margin-top:20px">🚗 Dojazd</h3>
+            <p>Łowisko zlokalizowane jest w malowniczej okolicy Gniewina, w otoczeniu lasów. Dojazd drogą asfaltową, parking bezpłatny przy łowisku.</p>
+            <p>Z Gdańska: ~50 min (trasa S6 → zjazd Gniewino)</p>
+            <p>Z Wejherowa: ~20 min</p>
+
+            <h3 style="margin-top:20px">🌤️ Pogoda</h3>
+            <div id="pogoda-widget" class="pogoda-box">
+                <p class="hint">Ładowanie pogody...</p>
+            </div>
+        </div>
+
+        <div class="kontakt-mapa">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d18432.5!2d18.1!3d54.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x46fd0a7d7c7a7a7d%3A0x0!2zNTTCsDM2JzAwLjAiTiAxOMKwMDYnMDAuMCJF!5e0!3m2!1spl!2spl!4v1700000000000!5m2!1spl!2spl"
+                width="100%" height="400" style="border:0; border-radius:12px;" allowfullscreen="" loading="lazy">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+<script suppress-error="BL9992">
+    (async function() {
+        try {
+            const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=54.6&longitude=18.1&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&timezone=Europe/Warsaw&forecast_days=5');
+            const d = await r.json();
+            const codes = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌧️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',80:'🌦️',81:'🌧️',82:'🌧️',95:'⛈️',96:'⛈️',99:'⛈️'};
+            const dni = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+            let html = '<div class="pogoda-dni">';
+            for(let i=0;i<5;i++){
+                const dt = new Date(d.daily.time[i]);
+                const dn = dni[dt.getDay()];
+                const ic = codes[d.daily.weathercode[i]] || '🌡️';
+                html += `<div class="pogoda-dzien"><div class="pogoda-dn">${dn} ${dt.getDate()}.${(dt.getMonth()+1).toString().padStart(2,'0')}</div><div class="pogoda-ico">${ic}</div><div class="pogoda-temp">${Math.round(d.daily.temperature_2m_max[i])}° / ${Math.round(d.daily.temperature_2m_min[i])}°</div><div class="pogoda-deszcz">💧${d.daily.precipitation_sum[i]}mm</div></div>`;
+            }
+            html += '</div>';
+            document.getElementById('pogoda-widget').innerHTML = html;
+        } catch(e) { document.getElementById('pogoda-widget').innerHTML = '<p>Nie udało się pobrać pogody</p>'; }
+    })();
+</script>

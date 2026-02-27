@@ -1,0 +1,40 @@
+@page "/regulamin"
+@using LowiskoWeb.Services
+@inject BazaDanych Db
+
+<div class="page-regulamin">
+    <h2>📜 Regulamin łowiska</h2>
+
+    <div class="regulamin-tresc">
+        @foreach (var punkt in zasady)
+        {
+            <div class="regulamin-punkt">@punkt</div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<string> zasady = [];
+
+    protected override void OnInitialized()
+    {
+        var tresc = Db.PobierzUstawienie("Regulamin", domyslny);
+        zasady = tresc.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+    }
+
+    private const string domyslny = @"1. Wędkowanie dozwolone wyłącznie na wykupionym stanowisku.
+2. Każdy wędkarz musi posiadać ważną kartę wędkarską.
+3. Na jednym stanowisku mogą przebywać max. 3 osoby łowiące.
+4. Obowiązuje cisza nocna od 22:00 do 6:00.
+5. Złowione ryby poniżej wymiarów ochronnych należy niezwłocznie wypuścić.
+6. Zakaz używania prądu, materiałów wybuchowych i trucizn.
+7. Każdy wędkarz odpowiada za czystość swojego stanowiska.
+8. Śmieci należy zabrać ze sobą lub wyrzucić do wyznaczonych pojemników.
+9. Parkowanie pojazdów wyłącznie w wyznaczonych miejscach.
+10. Rozpalanie ognisk dozwolone tylko w wyznaczonych miejscach.
+11. Dzieci poniżej 14 lat mogą łowić tylko pod opieką osoby dorosłej.
+12. Właściciel łowiska nie odpowiada za rzeczy pozostawione bez opieki.
+13. W razie problemów prosimy o kontakt z obsługą łowiska.
+14. Rezerwację można odwołać najpóźniej 24h przed przyjazdem.
+15. Nieprzestrzeganie regulaminu skutkuje usunięciem z łowiska bez zwrotu opłaty.";
+}

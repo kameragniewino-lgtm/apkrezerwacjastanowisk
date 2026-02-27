@@ -1,0 +1,58 @@
+@page "/cennik"
+@using LowiskoWeb.Services
+@inject StanowiskaService Svc
+
+<div class="page-cennik">
+    <h2>💰 Cennik łowiska</h2>
+    <p class="cennik-podtytul">Ceny obowiązujące na łowisku Gniewino</p>
+
+    <div class="cennik-grid">
+        <div class="cennik-karta cennik-dzien">
+            <div class="cennik-ikona">☀️</div>
+            <div class="cennik-nazwa">Dzień</div>
+            <div class="cennik-opis">@Svc.DomyslnaGodzinaOd.ToString("HH:mm") – @Svc.DomyslnaGodzinaDo.ToString("HH:mm")</div>
+            <div class="cennik-cena">@Svc.CenaDobowa.ToString("0") zł</div>
+            <div class="cennik-za">za stanowisko / dzień</div>
+        </div>
+
+        <div class="cennik-karta cennik-noc">
+            <div class="cennik-ikona">🌙</div>
+            <div class="cennik-nazwa">Nocka</div>
+            <div class="cennik-opis">@Svc.DomyslnaGodzinaDo.ToString("HH:mm") – @Svc.DomyslnaGodzinaOd.ToString("HH:mm")</div>
+            <div class="cennik-cena">@Svc.CenaNocna.ToString("0") zł</div>
+            <div class="cennik-za">za stanowisko / noc</div>
+        </div>
+
+        <div class="cennik-karta cennik-doba">
+            <div class="cennik-ikona">🔄</div>
+            <div class="cennik-nazwa">Doba</div>
+            <div class="cennik-opis">pełne 24 godziny</div>
+            <div class="cennik-cena">@Svc.CenaDoba.ToString("0") zł</div>
+            <div class="cennik-za">za stanowisko / dobę</div>
+        </div>
+    </div>
+
+    <h3 class="cennik-sekcja">🎣 Dodatki</h3>
+    <div class="cennik-lista">
+        <div class="cennik-pozycja">
+            <span>Wędki w cenie</span>
+            <span class="cennik-wartosc">@Svc.WedkiWCenie szt.</span>
+        </div>
+        <div class="cennik-pozycja">
+            <span>Dodatkowa wędka</span>
+            <span class="cennik-wartosc">+@Svc.CenaDodatkowaWedka.ToString("0") zł / szt.</span>
+        </div>
+        <div class="cennik-pozycja">
+            <span>Dodatkowy łowiący</span>
+            <span class="cennik-wartosc">+@Svc.CenaDodatkowyLowiacy.ToString("0") zł / os.</span>
+        </div>
+        <div class="cennik-pozycja">
+            <span>Osoba towarzysząca</span>
+            <span class="cennik-wartosc">+@Svc.CenaOsobaTowarzyszaca.ToString("0") zł / os.</span>
+        </div>
+    </div>
+
+    <div class="cennik-info">
+        <p>ℹ️ Ceny mogą ulec zmianie. Aktualne ceny są wyświetlane automatycznie w kalkulatorze przy rezerwacji.</p>
+    </div>
+</div>

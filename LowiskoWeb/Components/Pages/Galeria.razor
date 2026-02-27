@@ -1,0 +1,43 @@
+@page "/galeria"
+
+<div class="page-galeria">
+    <h2>📸 Galeria łowiska</h2>
+    <p class="galeria-podtytul">Zdjęcia z naszego łowiska i okolicy</p>
+
+    <div class="galeria-grid">
+        @foreach (var foto in zdjecia)
+        {
+            <div class="galeria-item" @onclick="() => Pokaz(foto)">
+                <img src="@foto.Url" alt="@foto.Opis" loading="lazy" />
+                <div class="galeria-opis">@foto.Opis</div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (wybraneFoto != null)
+{
+    <div class="modal-bg" @onclick="() => wybraneFoto = null">
+        <div class="galeria-lightbox" @onclick:stopPropagation="true">
+            <img src="@wybraneFoto.Url" alt="@wybraneFoto.Opis" />
+            <div class="galeria-lightbox-opis">@wybraneFoto.Opis</div>
+            <button class="btn-cancel" @onclick="() => wybraneFoto = null">✕ Zamknij</button>
+        </div>
+    </div>
+}
+
+@code {
+    private record Foto(string Url, string Opis);
+    private Foto? wybraneFoto;
+    private void Pokaz(Foto f) => wybraneFoto = f;
+
+    private readonly List<Foto> zdjecia =
+    [
+        new("https://images.unsplash.com/photo-1504309092620-4d0ec726efa4?w=600", "Widok na łowisko o wschodzie słońca"),
+        new("https://images.unsplash.com/photo-1440964829947-ca3277bd37f8?w=600", "Stanowiska wędkarskie"),
+        new("https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600", "Wędkowanie na jeziorze"),
+        new("https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600", "Poranny połów"),
+        new("https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600", "Okolica łowiska"),
+        new("https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=600", "Zachód słońca nad wodą"),
+    ];
+}

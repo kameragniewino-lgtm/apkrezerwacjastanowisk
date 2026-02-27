@@ -27,7 +27,8 @@ else
             <h2>🛠️ Panel Administratora</h2>
             <div class="admin-header-btns">
                 <button class="tab-btn @(zakladka == 0 ? "active" : "")" @onclick="() => ZmienZakladke(0)">📋 Rezerwacje</button>
-                <button class="tab-btn @(zakladka == 2 ? "active" : "")" @onclick="() => ZmienZakladke(2)">📊 Statystyki</button>
+                <button class="tab-btn @(zakladka == 4 ? "active" : "")" @onclick="() => ZmienZakladke(4)">📊 Dashboard</button>
+                <button class="tab-btn @(zakladka == 2 ? "active" : "")" @onclick="() => ZmienZakladke(2)">📈 Kalendarz</button>
                 <button class="tab-btn @(zakladka == 1 ? "active" : "")" @onclick="() => ZmienZakladke(1)">📍 Edycja mapy</button>
                 <button class="tab-btn @(zakladka == 3 ? "active" : "")" @onclick="() => ZmienZakladke(3)">⚙️ Ustawienia</button>
                 <button class="btn-cancel" @onclick="Wyloguj">Wyloguj</button>
@@ -227,6 +228,79 @@ else
                 <div class="settings-btns" style="margin-top:16px">
                     <button class="btn-rezerwuj" @onclick="ZapiszUstawienia">💾 Zapisz ustawienia</button>
                     @if (zapisanoUst) { <span class="saved-msg">✅ Zapisano!</span> }
+                </div>
+            </div>
+        }
+
+        @if (zakladka == 4)
+        {
+            <div class="dashboard">
+                <h3>📊 Dashboard</h3>
+                @{
+                    var wszystkie = Svc.WszystkieRezerwacje();
+                    var dzisiaj = wszystkie.Where(r => r.DataOd <= DateTime.Today && r.DataDo >= DateTime.Today).ToList();
+                    var tenMiesiac = wszystkie.Where(r => r.DataOd.Month == DateTime.Today.Month && r.DataOd.Year == DateTime.Today.Year).ToList();
+                    var przychMiesiac = tenMiesiac.Sum(r => r.Cena);
+                    var najPopSt = wszystkie.GroupBy(r => r.StanowiskoNumer).OrderByDescending(g => g.Count()).Take(5).ToList();
+                    var oblozenie7 = Enumerable.Range(0, 7).Select(i =>
+                    {
+                        var d = DateTime.Today.AddDays(i);
+                        var zajete = Svc.Stanowiska.Count(s => s.StatusDnia(d, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo) != "wolne");
+                        return (Dzien: d, Zajete: zajete);
+                    }).ToList();
+                }
+
+                <div class="dash-stats">
+                    <div class="dash-card">
+                        <div class="dash-val">@dzisiaj.Count</div>
+                        <div class="dash-label">Rezerwacji dziś</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-val">@tenMiesiac.Count</div>
+                        <div class="dash-label">Ten miesiąc</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-val">@przychMiesiac.ToString("0") zł</div>
+                        <div class="dash-label">Przychód (miesiąc)</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-val">@wszystkie.Count</div>
+                        <div class="dash-label">Łącznie rezerwacji</div>
+                    </div>
+                </div>
+
+                <div class="dash-row">
+                    <div class="dash-panel">
+                        <h4>📅 Obłożenie (7 dni)</h4>
+                        <div class="dash-chart">
+                            @foreach (var dz in oblozenie7)
+                            {
+                                var pct = Svc.Stanowiska.Count > 0 ? (dz.Zajete * 100 / Svc.Stanowiska.Count) : 0;
+                                <div class="dash-bar-wrap">
+                                    <div class="dash-bar-label">@dz.Dzien.ToString("dd.MM")</div>
+                                    <div class="dash-bar-bg">
+                                        <div class="dash-bar-fill" style="width:@pct%"></div>
+                                    </div>
+                                    <div class="dash-bar-val">@dz.Zajete/@Svc.Stanowiska.Count</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="dash-panel">
+                        <h4>🏆 Popularne stanowiska</h4>
+                        @foreach (var g in najPopSt)
+                        {
+                            var pct = wszystkie.Count > 0 ? (g.Count() * 100 / wszystkie.Count) : 0;
+                            <div class="dash-bar-wrap">
+                                <div class="dash-bar-label">Nr @g.Key</div>
+                                <div class="dash-bar-bg">
+                                    <div class="dash-bar-fill pop" style="width:@pct%"></div>
+                                </div>
+                                <div class="dash-bar-val">@g.Count() rez.</div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         }

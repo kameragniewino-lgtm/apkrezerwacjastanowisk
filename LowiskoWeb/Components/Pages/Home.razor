@@ -2,6 +2,7 @@
 @using LowiskoWeb.Models
 @using LowiskoWeb.Services
 @inject StanowiskaService Svc
+@inject IJSRuntime JS
 
 <div class="page-wrap">
     <div class="panel-left">
@@ -211,8 +212,14 @@
             {
                 <p class="error">@bladRez</p>
             }
+            <div class="regulamin-check">
+                <label class="toggle-label">
+                    <input type="checkbox" @bind="frmRegulamin" />
+                    <span>Akceptuję <a href="/regulamin" target="_blank">regulamin łowiska</a></span>
+                </label>
+            </div>
             <div class="modal-btns">
-                <button class="btn-rezerwuj" @onclick="Zarezerwuj">✅ Zarezerwuj</button>
+                <button class="btn-rezerwuj" @onclick="Zarezerwuj" disabled="@(!frmRegulamin)">✅ Zarezerwuj</button>
                 <button class="btn-cancel" @onclick="ZamknijFormularz">Anuluj</button>
             </div>
         </div>
@@ -233,8 +240,11 @@
                 <div class="potw-row">🎣 @ostatniaRez.IloscWedek wędek · @ostatniaRez.IloscLowiacych łowiących @(ostatniaRez.OsobaTowarzyszaca ? "· +osoba tow." : "")</div>
                 <div class="potw-row potw-cena">💰 @ostatniaRez.Cena.ToString("0.00") zł</div>
             </div>
-            <p class="potw-hint">📸 Zrób zrzut ekranu jako potwierdzenie</p>
-            <button class="btn-rezerwuj" @onclick="() => pokazPotwierdzenie = false">OK</button>
+            <p class="potw-hint">📸 Zrób zrzut ekranu lub wydrukuj potwierdzenie</p>
+            <div class="modal-btns">
+                <button class="btn-rezerwuj" @onclick="DrukujPotwierdzenie">🖨️ Drukuj</button>
+                <button class="btn-cancel" @onclick="() => pokazPotwierdzenie = false">Zamknij</button>
+            </div>
         </div>
     </div>
 }
@@ -303,6 +313,9 @@
     private string mojTelefon = "";
     private List<Rezerwacja>? mojeRezerwacje;
 
+    // Regulamin
+    private bool frmRegulamin;
+
     private void Kliknij(Stanowisko st)
     {
         wybrane = st;
@@ -351,6 +364,7 @@
         frmIloscLowiacych = 1;
         frmIloscWedek = Svc.WedkiWCenie;
         frmOsobaTow = false;
+        frmRegulamin = false;
         bladRez = null;
         WybierzTyp(typ);
         pokazFormularz = true;
@@ -400,6 +414,11 @@
         mojeRezerwacje = Svc.WszystkieRezerwacje()
             .Where(r => r.Telefon != null && r.Telefon.Replace(" ", "").Contains(tel))
             .ToList();
+    }
+
+    private async Task DrukujPotwierdzenie()
+    {
+        await JS.InvokeVoidAsync("window.print");
     }
 
     private void Zarezerwuj()
