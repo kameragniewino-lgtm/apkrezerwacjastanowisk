@@ -1,0 +1,458 @@
+@page "/"
+@using LowiskoWeb.Models
+@using LowiskoWeb.Services
+@inject StanowiskaService Svc
+
+<div class="page-wrap">
+    <div class="panel-left">
+        <div class="panel-top-btns">
+            <button class="btn-moje" @onclick="() => pokazMoje = true">📱 Moje rezerwacje</button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-val">@wolne</div>
+                <div class="stat-label">wolne dziś</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-val">@(Svc.Stanowiska.Count - wolne)</div>
+                <div class="stat-label">zajęte</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-val">@Svc.Stanowiska.Count</div>
+                <div class="stat-label">łącznie</div>
+            </div>
+        </div>
+
+        <div class="legenda">
+            <span class="dot green"></span> Wolne
+            <span class="dot yellow"></span> Częściowo
+            <span class="dot red"></span> Zajęte
+        </div>
+
+        @if (wybrane != null)
+        {
+            <div class="info-box">
+                <h4>Stanowisko nr @wybrane.Numer</h4>
+                @{
+                    var statusDzis = wybrane.StatusDnia(wybranyDzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+                    var rez = wybrane.RezerwacjaDnia(wybranyDzien);
+                }
+                @if (statusDzis == "pelne")
+                {
+                    <p class="status-zajete">🔴 ZAJĘTE cały dzień</p>
+                    @if (rez != null)
+                    {
+                        <p>@rez.TypPobytu · @rez.DataOd.ToString("dd.MM") @rez.GodzinaOd.ToString("HH:mm") → @rez.DataDo.ToString("dd.MM") @rez.GodzinaDo.ToString("HH:mm")</p>
+                    }
+                }
+                else if (statusDzis == "dzien")
+                {
+                    <p class="status-czesciowe">☀️ Dzień zajęty — 🌙 nocka wolna!</p>
+                    <button class="btn-rezerwuj" @onclick='() => OtworzFormularzTyp("Nocka")'>🌙 Zarezerwuj nockę</button>
+                }
+                else if (statusDzis == "nocka")
+                {
+                    <p class="status-czesciowe">🌙 Nocka zajęta — ☀️ dzień wolny!</p>
+                    <button class="btn-rezerwuj" @onclick='() => OtworzFormularzTyp("Dzień")'>☀️ Zarezerwuj dzień</button>
+                }
+                else
+                {
+                    <p class="status-wolne">🟢 WOLNE</p>
+                    <button class="btn-rezerwuj" @onclick="OtworzFormularz">Zarezerwuj</button>
+                }
+
+                <div class="mini-kal">
+                    <div class="mini-kal-nav">
+                        <button class="mini-kal-btn" @onclick="PoprzedniMiesiac">◀</button>
+                        <div class="mini-kal-title">@kalMiesiac.ToString("MMMM yyyy")</div>
+                        <button class="mini-kal-btn" @onclick="NastepnyMiesiac">▶</button>
+                    </div>
+                    <div class="mini-kal-header">
+                        <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>Sb</div><div>Nd</div>
+                    </div>
+                    <div class="mini-kal-grid">
+                        @{
+                            var pierwszy = new DateTime(kalMiesiac.Year, kalMiesiac.Month, 1);
+                            int offset = ((int)pierwszy.DayOfWeek + 6) % 7;
+                            int dniWMiesiacu = DateTime.DaysInMonth(kalMiesiac.Year, kalMiesiac.Month);
+                        }
+                        @for (int i = 0; i < offset; i++)
+                        {
+                            <div class="mini-kal-day empty"></div>
+                        }
+                        @for (int d = 1; d <= dniWMiesiacu; d++)
+                        {
+                            var dzien = new DateTime(kalMiesiac.Year, kalMiesiac.Month, d);
+                            var st = wybrane.StatusDnia(dzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+                            bool dzisiaj = dzien == DateTime.Today;
+                            bool wybrany = dzien.Date == wybranyDzien.Date;
+                            bool przeszly = dzien < DateTime.Today;
+                            <div class="mini-kal-day kal-@st @(dzisiaj ? "today" : "") @(wybrany ? "picked" : "") @(przeszly ? "past" : "")"
+                                 @onclick="() => KliknijDzien(dzien)"
+                                 title="@st">
+                                @d
+                                @if (st == "dzien") { <span class="kal-icon">☀️</span> }
+                                @if (st == "nocka") { <span class="kal-icon">🌙</span> }
+                            </div>
+                        }
+                    </div>
+                    <div class="mini-kal-legend">
+                        <div class="mini-kal-leg-item"><div class="dot green"></div> Wolne</div>
+                        <div class="mini-kal-leg-item">☀️ Dzień zajęty</div>
+                        <div class="mini-kal-leg-item">🌙 Noc zajęta</div>
+                        <div class="mini-kal-leg-item"><div class="dot red"></div> Pełne</div>
+                    </div>
+                    <p class="mini-kal-hint">Kliknij dzień aby zarezerwować</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="hint">Kliknij stanowisko na mapie</p>
+        }
+    </div>
+
+    <div class="mapa-scroll">
+        <div class="mapa-wrap">
+            <img src="images/mapa.png" class="mapa-img" draggable="false" />
+            @foreach (var st in Svc.Stanowiska)
+            {
+                var stStatus = st.StatusDnia(wybranyDzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+                bool selected = st == wybrane;
+                <div class="spot spot-@stStatus @(selected ? "selected" : "")"
+                     style="left:@(st.X.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))%;top:@(st.Y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))%"
+                     @onclick="() => Kliknij(st)">
+                    @st.Numer
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (pokazFormularz)
+{
+    <div class="modal-bg" @onclick="ZamknijFormularz">
+        <div class="modal" @onclick:stopPropagation="true">
+            <h3>Rezerwacja stanowiska nr @wybrane!.Numer</h3>
+            <label>Imię i nazwisko:</label>
+            <input @bind="frmNazwa" @bind:event="oninput" placeholder="Jan Kowalski" />
+            <label>Telefon:</label>
+            <input @bind="frmTelefon" @bind:event="oninput" placeholder="123 456 789" />
+
+            <label>Typ pobytu:</label>
+            <div class="typ-btns">
+                <button class="typ-btn @(frmTyp == "Dzień" ? "active" : "")" @onclick='() => WybierzTyp("Dzień")'>☀️ Dzień</button>
+                <button class="typ-btn @(frmTyp == "Nocka" ? "active" : "")" @onclick='() => WybierzTyp("Nocka")'>🌙 Nocka</button>
+                <button class="typ-btn @(frmTyp == "Doba" ? "active" : "")" @onclick='() => WybierzTyp("Doba")'>🔄 Doba</button>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Od:</label>
+                    <input type="date" @bind="frmOd" @bind:after="PrzeliczCene" />
+                </div>
+                <div class="form-col">
+                    <label>Do:</label>
+                    <input type="date" @bind="frmDo" @bind:after="PrzeliczCene" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Godz. przyjazdu:</label>
+                    <input type="time" @bind="frmGodzOd" @bind:after="PrzeliczCene" />
+                </div>
+                <div class="form-col">
+                    <label>Godz. wyjazdu:</label>
+                    <input type="time" @bind="frmGodzDo" @bind:after="PrzeliczCene" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Łowiących:</label>
+                    <select @bind="frmIloscLowiacych" @bind:after="PrzeliczCene">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <option value="@i">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label>Wędek (@Svc.WedkiWCenie w cenie):</label>
+                    <select @bind="frmIloscWedek" @bind:after="PrzeliczCene">
+                        @for (int i = 1; i <= 8; i++)
+                        {
+                            <option value="@i">@i @(i > Svc.WedkiWCenie ? $"(+{(i - Svc.WedkiWCenie) * Svc.CenaDodatkowaWedka}zł)" : "")</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Osoba towarzysząca:</label>
+                    <label class="toggle-label">
+                        <input type="checkbox" @bind="frmOsobaTow" @bind:after="PrzeliczCene" />
+                        <span>@(frmOsobaTow ? "Tak" : "Nie")</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="cena-box">
+                💰 Cena: <strong>@frmCena.ToString("0.00") zł</strong>
+                <div class="cena-szczegoly">
+                    @frmTyp @((frmDo.Date - frmOd.Date).Days + 1) dzień/dni × @CenaBazowa().ToString("0")zł
+                    @if (frmIloscLowiacych > 1) { <span>+ @(frmIloscLowiacych-1) dod. łowiący</span> }
+                    @if (frmIloscWedek > Svc.WedkiWCenie) { <span>+ @(frmIloscWedek - Svc.WedkiWCenie) dod. wędek</span> }
+                    @if (frmOsobaTow) { <span>+ osoba tow.</span> }
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(bladRez))
+            {
+                <p class="error">@bladRez</p>
+            }
+            <div class="modal-btns">
+                <button class="btn-rezerwuj" @onclick="Zarezerwuj">✅ Zarezerwuj</button>
+                <button class="btn-cancel" @onclick="ZamknijFormularz">Anuluj</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (pokazPotwierdzenie && ostatniaRez != null)
+{
+    <div class="modal-bg" @onclick="() => pokazPotwierdzenie = false">
+        <div class="modal potw-modal" @onclick:stopPropagation="true">
+            <div class="potw-header">✅ Rezerwacja potwierdzona!</div>
+            <div class="potw-kod">Kod: <strong>REZ-@ostatniaRez.Id.ToString("D4")</strong></div>
+            <div class="potw-details">
+                <div class="potw-row">🎣 <strong>@ostatniaRez.Wedkarz</strong></div>
+                <div class="potw-row">📍 Stanowisko nr <strong>@ostatniaRez.StanowiskoNumer</strong></div>
+                <div class="potw-row">📅 @ostatniaRez.TypPobytu · @ostatniaRez.DataOd.ToString("dd.MM.yyyy") @(ostatniaRez.DataOd != ostatniaRez.DataDo ? $"– {ostatniaRez.DataDo:dd.MM.yyyy}" : "")</div>
+                <div class="potw-row">🕐 @ostatniaRez.GodzinaOd.ToString("HH:mm") → @ostatniaRez.GodzinaDo.ToString("HH:mm")</div>
+                <div class="potw-row">🎣 @ostatniaRez.IloscWedek wędek · @ostatniaRez.IloscLowiacych łowiących @(ostatniaRez.OsobaTowarzyszaca ? "· +osoba tow." : "")</div>
+                <div class="potw-row potw-cena">💰 @ostatniaRez.Cena.ToString("0.00") zł</div>
+            </div>
+            <p class="potw-hint">📸 Zrób zrzut ekranu jako potwierdzenie</p>
+            <button class="btn-rezerwuj" @onclick="() => pokazPotwierdzenie = false">OK</button>
+        </div>
+    </div>
+}
+
+@if (pokazMoje)
+{
+    <div class="modal-bg" @onclick="() => pokazMoje = false">
+        <div class="modal moje-modal" @onclick:stopPropagation="true">
+            <h3>📱 Moje rezerwacje</h3>
+            <label>Podaj numer telefonu:</label>
+            <input @bind="mojTelefon" @bind:event="oninput" placeholder="123 456 789" />
+            <button class="btn-rezerwuj" style="margin-top:8px" @onclick="SzukajMoich">🔍 Szukaj</button>
+
+            @if (mojeRezerwacje != null)
+            {
+                @if (mojeRezerwacje.Count == 0)
+                {
+                    <p class="hint" style="margin-top:12px">Brak rezerwacji dla tego numeru.</p>
+                }
+                else
+                {
+                    <div class="moje-lista">
+                        @foreach (var r in mojeRezerwacje.OrderBy(r => r.DataOd))
+                        {
+                            bool aktywna = r.DataDo >= DateTime.Today;
+                            <div class="moje-karta @(aktywna ? "" : "nieaktywna")">
+                                <div class="moje-kod">REZ-@r.Id.ToString("D4")</div>
+                                <div>📍 Stanowisko <strong>@r.StanowiskoNumer</strong> · @r.TypPobytu</div>
+                                <div>📅 @r.DataOd.ToString("dd.MM") → @r.DataDo.ToString("dd.MM") · @r.GodzinaOd.ToString("HH:mm")–@r.GodzinaDo.ToString("HH:mm")</div>
+                                <div>💰 <strong>@r.Cena.ToString("0.00") zł</strong></div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            <button class="btn-cancel" style="margin-top:10px" @onclick="() => pokazMoje = false">Zamknij</button>
+        </div>
+    </div>
+}
+
+@code {
+    private DateTime wybranyDzien = DateTime.Today;
+    private Stanowisko? wybrane;
+    private int wolne => Svc.Stanowiska.Count(s => s.StatusDnia(wybranyDzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo) == "wolne");
+
+    private bool pokazFormularz;
+    private string frmNazwa = "";
+    private string frmTelefon = "";
+    private string frmTyp = "Dzień";
+    private DateTime frmOd;
+    private DateTime frmDo;
+    private TimeOnly frmGodzOd;
+    private TimeOnly frmGodzDo;
+    private int frmIloscLowiacych = 1;
+    private int frmIloscWedek = 2;
+    private bool frmOsobaTow;
+    private decimal frmCena;
+    private string? bladRez;
+
+    // Potwierdzenie
+    private bool pokazPotwierdzenie;
+    private Rezerwacja? ostatniaRez;
+
+    // Moje rezerwacje
+    private bool pokazMoje;
+    private string mojTelefon = "";
+    private List<Rezerwacja>? mojeRezerwacje;
+
+    private void Kliknij(Stanowisko st)
+    {
+        wybrane = st;
+        kalMiesiac = new DateTime(wybranyDzien.Year, wybranyDzien.Month, 1, 0, 0, 0);
+    }
+
+    // Mini kalendarz
+    private DateTime kalMiesiac = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private void PoprzedniMiesiac() => kalMiesiac = kalMiesiac.AddMonths(-1);
+    private void NastepnyMiesiac() => kalMiesiac = kalMiesiac.AddMonths(1);
+
+    private void KliknijDzien(DateTime dzien)
+    {
+        if (dzien < DateTime.Today) return;
+
+        wybranyDzien = dzien;
+
+        if (wybrane == null) return;
+
+        var status = wybrane.StatusDnia(dzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+        switch (status)
+        {
+            case "wolne":
+                OtworzFormularz();
+                break;
+            case "dzien":
+                OtworzFormularzTyp("Nocka");
+                break;
+            case "nocka":
+                OtworzFormularzTyp("Dzień");
+                break;
+        }
+    }
+
+    private void OtworzFormularz()
+    {
+        OtworzFormularzTyp("Dzień");
+    }
+
+    private void OtworzFormularzTyp(string typ)
+    {
+        frmNazwa = "";
+        frmTelefon = "";
+        frmOd = wybranyDzien;
+        frmDo = wybranyDzien;
+        frmIloscLowiacych = 1;
+        frmIloscWedek = Svc.WedkiWCenie;
+        frmOsobaTow = false;
+        bladRez = null;
+        WybierzTyp(typ);
+        pokazFormularz = true;
+    }
+
+    private void WybierzTyp(string typ)
+    {
+        frmTyp = typ;
+        switch (typ)
+        {
+            case "Dzień":
+                frmGodzOd = Svc.DomyslnaGodzinaOd;
+                frmGodzDo = Svc.DomyslnaGodzinaDo;
+                break;
+            case "Nocka":
+                frmGodzOd = Svc.DomyslnaGodzinaDo;
+                frmGodzDo = Svc.DomyslnaGodzinaOd;
+                break;
+            case "Doba":
+                frmGodzOd = Svc.DomyslnaGodzinaOd;
+                frmGodzDo = Svc.DomyslnaGodzinaOd;
+                break;
+        }
+        PrzeliczCene();
+    }
+
+    private decimal CenaBazowa() => frmTyp switch
+    {
+        "Nocka" => Svc.CenaNocna,
+        "Doba" => Svc.CenaDoba,
+        _ => Svc.CenaDobowa
+    };
+
+    private void PrzeliczCene()
+    {
+        var od = frmOd <= frmDo ? frmOd : frmDo;
+        var doo = frmOd <= frmDo ? frmDo : frmOd;
+        frmCena = Svc.ObliczCene(frmTyp, od, doo, frmIloscLowiacych, frmIloscWedek, frmOsobaTow);
+    }
+
+    private void ZamknijFormularz() => pokazFormularz = false;
+
+    private void SzukajMoich()
+    {
+        var tel = mojTelefon.Trim().Replace(" ", "");
+        if (tel.Length < 3) { mojeRezerwacje = null; return; }
+        mojeRezerwacje = Svc.WszystkieRezerwacje()
+            .Where(r => r.Telefon != null && r.Telefon.Replace(" ", "").Contains(tel))
+            .ToList();
+    }
+
+    private void Zarezerwuj()
+    {
+        bladRez = null;
+
+        if (string.IsNullOrWhiteSpace(frmNazwa))
+        {
+            bladRez = "Wpisz imię i nazwisko!";
+            return;
+        }
+
+        if (wybrane == null) return;
+
+        if (frmDo < frmOd) frmDo = frmOd;
+
+        var poczatek = frmOd.Date + frmGodzOd.ToTimeSpan();
+        var koniec = frmDo.Date + frmGodzDo.ToTimeSpan();
+
+        // Nocka/Doba — godzina końca <= startu = koniec następnego dnia
+        if (frmGodzDo <= frmGodzOd)
+            koniec = koniec.AddDays(1);
+
+        if (koniec <= poczatek)
+        {
+            bladRez = "Godzina wyjazdu musi być po godzinie przyjazdu!";
+            return;
+        }
+
+        if (wybrane.CzyZajete(poczatek, koniec))
+        {
+            bladRez = "To stanowisko jest już zajęte w tym terminie!";
+            return;
+        }
+
+        var nowaRez = new Rezerwacja
+        {
+            StanowiskoNumer = wybrane.Numer,
+            Wedkarz = frmNazwa.Trim(),
+            Telefon = frmTelefon.Trim(),
+            TypPobytu = frmTyp,
+            DataOd = frmOd,
+            DataDo = frmDo,
+            GodzinaOd = frmGodzOd,
+            GodzinaDo = frmGodzDo,
+            IloscLowiacych = frmIloscLowiacych,
+            IloscWedek = frmIloscWedek,
+            OsobaTowarzyszaca = frmOsobaTow,
+            Cena = frmCena
+        };
+        Svc.Rezerwuj(nowaRez);
+        ostatniaRez = nowaRez;
+        pokazFormularz = false;
+        pokazPotwierdzenie = true;
+    }
+}

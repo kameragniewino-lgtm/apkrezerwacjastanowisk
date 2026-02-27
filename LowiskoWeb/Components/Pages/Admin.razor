@@ -1,0 +1,354 @@
+@page "/admin"
+@using LowiskoWeb.Models
+@using LowiskoWeb.Services
+@inject StanowiskaService Svc
+@inject BazaDanych Db
+@inject IJSRuntime JS
+
+@if (!zalogowany)
+{
+    <div class="login-box">
+        <h2>🔐 Panel Administratora</h2>
+        <label>Login:</label>
+        <input @bind="login" @bind:event="oninput" />
+        <label>Hasło:</label>
+        <input type="password" @bind="haslo" @bind:event="oninput" />
+        @if (bladLogowania)
+        {
+            <p class="error">Nieprawidłowy login lub hasło</p>
+        }
+        <button class="btn-rezerwuj" @onclick="Zaloguj">Zaloguj się</button>
+    </div>
+}
+else
+{
+    <div class="admin-panel">
+        <div class="admin-header">
+            <h2>🛠️ Panel Administratora</h2>
+            <div class="admin-header-btns">
+                <button class="tab-btn @(zakladka == 0 ? "active" : "")" @onclick="() => ZmienZakladke(0)">📋 Rezerwacje</button>
+                <button class="tab-btn @(zakladka == 2 ? "active" : "")" @onclick="() => ZmienZakladke(2)">📊 Statystyki</button>
+                <button class="tab-btn @(zakladka == 1 ? "active" : "")" @onclick="() => ZmienZakladke(1)">📍 Edycja mapy</button>
+                <button class="tab-btn @(zakladka == 3 ? "active" : "")" @onclick="() => ZmienZakladke(3)">⚙️ Ustawienia</button>
+                <button class="btn-cancel" @onclick="Wyloguj">Wyloguj</button>
+            </div>
+        </div>
+
+        @if (zakladka == 0)
+        {
+            <div class="admin-filters">
+                <div class="filter-group">
+                    <label>📅 Podgląd dnia:</label>
+                    <input type="date" @bind="podgladData" class="filter-input" />
+                </div>
+                <div class="filter-group">
+                    <label>Szukaj:</label>
+                    <input @bind="szukaj" @bind:event="oninput" placeholder="Wędkarz, telefon..." class="filter-input" />
+                </div>
+                <div class="admin-stats">
+                    🟢 Wolne: <strong>@podgladWolne</strong> / @Svc.Stanowiska.Count
+                    &nbsp; 🔴 Zajęte: <strong>@podgladZajete</strong>
+                    &nbsp; 📊 Łącznie rez.: <strong>@Filtrowane.Count()</strong>
+                </div>
+            </div>
+
+            <div class="kal-grid">
+                @foreach (var st in Svc.Stanowiska.OrderBy(s => s.Numer))
+                {
+                    var stStatus = st.StatusDnia(podgladData, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+                    var rezDnia = st.RezerwacjaDnia(podgladData);
+                    var rezSt = Filtrowane.Where(r => r.StanowiskoNumer == st.Numer).ToList();
+                    <div class="kal-card @(stStatus == "wolne" ? "kal-wolne" : stStatus == "pelne" ? "kal-zajete" : "kal-czesciowe")">
+                        <div class="kal-card-top">
+                            <span class="kal-card-nr">Nr @st.Numer</span>
+                            <span class="kal-card-badge @(stStatus == "wolne" ? "free" : stStatus == "pelne" ? "" : "partial")">
+                                @(stStatus switch { "wolne" => "🟢 Wolne", "pelne" => "🔴 Pełne", "dzien" => "☀️ Dzień zajęty", _ => "🌙 Noc zajęta" })
+                            </span>
+                        </div>
+                        @if (rezDnia != null)
+                        {
+                            <div class="kal-card-detail">🎣 @rezDnia!.Wedkarz @(rezDnia.IloscLowiacych > 1 ? $"(+{rezDnia.IloscLowiacych - 1} łow.)" : "")</div>
+                            @if (!string.IsNullOrEmpty(rezDnia.Telefon))
+                            {
+                                <div class="kal-card-detail">📞 @rezDnia.Telefon</div>
+                            }
+                            <div class="kal-card-detail">📅 @rezDnia.TypPobytu · @rezDnia.DataOd.ToString("dd.MM") @rezDnia.GodzinaOd.ToString("HH:mm") → @rezDnia.DataDo.ToString("dd.MM") @rezDnia.GodzinaDo.ToString("HH:mm")</div>
+                            <div class="kal-card-detail">👥 @rezDnia.IloscLowiacych łow. · 🎣 @rezDnia.IloscWedek węd. @(rezDnia.OsobaTowarzyszaca ? "· +tow." : "")</div>
+                            <div class="kal-card-detail kal-cena">💰 @rezDnia.Cena.ToString("0.00") zł</div>
+                        }
+                        @{ var nadchodzace = rezSt.Where(r => r.DataDo >= podgladData).OrderBy(r => r.DataOd).ToList(); }
+                        @if (nadchodzace.Count > 0)
+                        {
+                            <div class="kal-card-rez-list">
+                                @foreach (var r in nadchodzace)
+                                {
+                                    bool aktywna = r.DataOd <= podgladData && r.DataDo >= podgladData;
+                                    <div class="kal-rez-item @(aktywna ? "active" : "")">
+                                        <span>@r.TypPobytu · @r.DataOd.ToString("dd.MM") → @r.DataDo.ToString("dd.MM") · @r.Wedkarz · @r.Cena.ToString("0")zł · @r.IloscWedek węd.</span>
+                                        <button class="btn-del-sm" @onclick="() => Usun(r.Id)">🗑️</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (zakladka == 2)
+        {
+            <div class="stats-panel">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value">@Svc.Stanowiska.Count</div>
+                        <div class="stat-label">Stanowisk</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">@rezerwacje.Count</div>
+                        <div class="stat-label">Wszystkich rezerwacji</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">@rezerwacje.Count(r => r.DataDo >= DateTime.Today)</div>
+                        <div class="stat-label">Aktywnych / przyszłych</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">@rezerwacje.Count(r => r.DataDo < DateTime.Today)</div>
+                        <div class="stat-label">Miniętych</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">@podgladZajete</div>
+                        <div class="stat-label">Zajętych dziś</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">@podgladWolne</div>
+                        <div class="stat-label">Wolnych dziś</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:20px;color:#aaa;">🔥 Najbardziej popularne stanowiska</h3>
+                <div class="stats-ranking">
+                    @foreach (var st in Svc.Stanowiska.OrderByDescending(s => s.Rezerwacje.Count).Take(10))
+                    {
+                        int cnt = st.Rezerwacje.Count;
+                        int max = Svc.Stanowiska.Max(s => s.Rezerwacje.Count);
+                        double pct = max > 0 ? (double)cnt / max * 100 : 0;
+                        <div class="rank-row">
+                            <span class="rank-label">Nr @st.Numer</span>
+                            <div class="rank-bar-bg">
+                                <div class="rank-bar" style="width:@pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                            </div>
+                            <span class="rank-count">@cnt rez.</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (zakladka == 1)
+        {
+            <div class="editor-info">
+                <p>Przeciągnij kółka na właściwe miejsca, potem kliknij <strong>Zapisz pozycje</strong>.</p>
+                <button class="btn-rezerwuj" @onclick="ZapiszPozycje">💾 Zapisz pozycje</button>
+                @if (zapisano) { <span class="saved-msg">✅ Zapisano!</span> }
+            </div>
+            <div class="mapa-editor" @ref="mapaRef"
+                 @onmousemove="EditorMouseMove"
+                 @onmouseup="EditorMouseUp"
+                 @onmouseleave="EditorMouseUp">
+                <img src="images/mapa.png" class="mapa-img" draggable="false" />
+                @foreach (var st in Svc.Stanowiska)
+                {
+                    bool active = st.Numer == przeciaganyNr;
+                    <div class="spot editor-spot @(active ? "dragging" : "")"
+                         style="left:@F(st.X)%;top:@F(st.Y)%"
+                         @onmousedown="e => EditorMouseDown(e, st.Numer)"
+                         @onmousedown:preventDefault="true">
+                        @st.Numer
+                    </div>
+                }
+            </div>
+        }
+
+        @if (zakladka == 3)
+        {
+            <div class="settings-panel">
+                <h3>⚙️ Ustawienia łowiska</h3>
+
+                <h4 style="color:#aaa;margin:12px 0 8px">🕐 Godziny</h4>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Start dnia (przyjazd):</label>
+                        <input type="time" @bind="ustGodzinaOd" />
+                    </div>
+                    <div class="form-col">
+                        <label>Koniec dnia (wyjazd):</label>
+                        <input type="time" @bind="ustGodzinaDo" />
+                    </div>
+                </div>
+
+                <h4 style="color:#aaa;margin:16px 0 8px">💰 Cennik</h4>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>☀️ Dzień (@ustGodzinaOd.ToString("HH:mm")–@ustGodzinaDo.ToString("HH:mm")):</label>
+                        <div class="input-zl"><input type="number" step="1" @bind="ustCenaDobowa" /><span>zł</span></div>
+                    </div>
+                    <div class="form-col">
+                        <label>🌙 Nocka (@ustGodzinaDo.ToString("HH:mm")–@ustGodzinaOd.ToString("HH:mm")):</label>
+                        <div class="input-zl"><input type="number" step="1" @bind="ustCenaNocna" /><span>zł</span></div>
+                    </div>
+                    <div class="form-col">
+                        <label>🔄 Doba (24h):</label>
+                        <div class="input-zl"><input type="number" step="1" @bind="ustCenaDoba" /><span>zł</span></div>
+                    </div>
+                </div>
+
+                <h4 style="color:#aaa;margin:16px 0 8px">🎣 Osoby i wędki</h4>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Dodatkowy łowiący:</label>
+                        <div class="input-zl"><input type="number" step="1" @bind="ustCenaDodLow" /><span>zł</span></div>
+                    </div>
+                    <div class="form-col">
+                        <label>Osoba towarzysząca:</label>
+                        <div class="input-zl"><input type="number" step="1" @bind="ustCenaOsobaTow" /><span>zł</span></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Wędek w cenie:</label>
+                        <input type="number" min="1" max="10" @bind="ustWedkiWCenie" class="settings-input" />
+                    </div>
+                    <div class="form-col">
+                        <label>Dodatkowa wędka:</label>
+                        <div class="input-zl"><input type="number" step="1" @bind="ustCenaDodWedka" /><span>zł</span></div>
+                    </div>
+                </div>
+
+                <div class="settings-btns" style="margin-top:16px">
+                    <button class="btn-rezerwuj" @onclick="ZapiszUstawienia">💾 Zapisz ustawienia</button>
+                    @if (zapisanoUst) { <span class="saved-msg">✅ Zapisano!</span> }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool zalogowany;
+    private string login = "";
+    private string haslo = "";
+    private bool bladLogowania;
+    private List<Rezerwacja> rezerwacje = [];
+    private int zakladka;
+    private string szukaj = "";
+
+    // Podgląd dnia
+    private DateTime podgladData = DateTime.Today;
+
+    // Ustawienia
+    private TimeOnly ustGodzinaOd;
+    private TimeOnly ustGodzinaDo;
+    private decimal ustCenaDobowa;
+    private decimal ustCenaNocna;
+    private decimal ustCenaDoba;
+    private decimal ustCenaDodLow;
+    private decimal ustCenaOsobaTow;
+    private int ustWedkiWCenie;
+    private decimal ustCenaDodWedka;
+    private bool zapisanoUst;
+    private int podgladWolne => Svc.Stanowiska.Count(s => s.StatusDnia(podgladData, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo) == "wolne");
+    private int podgladZajete => Svc.Stanowiska.Count - podgladWolne;
+
+    private int? przeciaganyNr;
+    private bool zapisano;
+    private ElementReference mapaRef;
+
+    private IEnumerable<Rezerwacja> Filtrowane =>
+        string.IsNullOrWhiteSpace(szukaj)
+            ? rezerwacje
+            : rezerwacje.Where(r =>
+                r.Wedkarz.Contains(szukaj, StringComparison.OrdinalIgnoreCase) ||
+                (r.Telefon ?? "").Contains(szukaj, StringComparison.OrdinalIgnoreCase) ||
+                r.StanowiskoNumer.ToString().Contains(szukaj));
+
+    private static string F(double v) => v.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+
+    private void Zaloguj()
+    {
+        if (Db.SprawdzLogowanie(login, haslo))
+        {
+            zalogowany = true;
+            bladLogowania = false;
+            Odswiez();
+            WczytajUstawienia();
+        }
+        else
+        { bladLogowania = true; }
+    }
+
+    private void Wyloguj() { zalogowany = false; login = ""; haslo = ""; }
+    private void Odswiez() => rezerwacje = Svc.WszystkieRezerwacje();
+    private void ZmienZakladke(int z) { zakladka = z; zapisano = false; if (z == 0) Odswiez(); }
+
+    private void Usun(int id) { Svc.Usun(id); Odswiez(); }
+
+    private void EditorMouseDown(MouseEventArgs e, int nr)
+    {
+        przeciaganyNr = nr;
+        zapisano = false;
+    }
+
+    private async Task EditorMouseMove(MouseEventArgs e)
+    {
+        if (przeciaganyNr == null) return;
+        var st = Svc.Stanowiska.FirstOrDefault(s => s.Numer == przeciaganyNr);
+        if (st == null) return;
+
+        var rect = await JS.InvokeAsync<ContainerRect>("mapaEditor.getContainerRect", mapaRef);
+        if (rect.W < 1 || rect.H < 1) return;
+
+        double px = (e.ClientX - rect.X) / rect.W * 100.0;
+        double py = (e.ClientY - rect.Y) / rect.H * 100.0;
+        st.X = Math.Clamp(px, 0, 100);
+        st.Y = Math.Clamp(py, 0, 100);
+    }
+
+    private void EditorMouseUp(MouseEventArgs e) => przeciaganyNr = null;
+
+    private void ZapiszPozycje()
+    {
+        Db.ZapiszPozycje(Svc.Stanowiska);
+        zapisano = true;
+    }
+
+    private void WczytajUstawienia()
+    {
+        ustGodzinaOd = Svc.DomyslnaGodzinaOd;
+        ustGodzinaDo = Svc.DomyslnaGodzinaDo;
+        ustCenaDobowa = Svc.CenaDobowa;
+        ustCenaNocna = Svc.CenaNocna;
+        ustCenaDoba = Svc.CenaDoba;
+        ustCenaDodLow = Svc.CenaDodatkowyLowiacy;
+        ustCenaOsobaTow = Svc.CenaOsobaTowarzyszaca;
+        ustWedkiWCenie = Svc.WedkiWCenie;
+        ustCenaDodWedka = Svc.CenaDodatkowaWedka;
+        zapisanoUst = false;
+    }
+
+    private void ZapiszUstawienia()
+    {
+        Db.ZapiszUstawienie("GodzinaStart", ustGodzinaOd.ToString("HH:mm"));
+        Db.ZapiszUstawienie("GodzinaKoniec", ustGodzinaDo.ToString("HH:mm"));
+        Db.ZapiszUstawienie("CenaDobowa", ustCenaDobowa.ToString("0"));
+        Db.ZapiszUstawienie("CenaNocna", ustCenaNocna.ToString("0"));
+        Db.ZapiszUstawienie("CenaDoba", ustCenaDoba.ToString("0"));
+        Db.ZapiszUstawienie("CenaDodatkowyLowiacy", ustCenaDodLow.ToString("0"));
+        Db.ZapiszUstawienie("CenaOsobaTowarzyszaca", ustCenaOsobaTow.ToString("0"));
+        Db.ZapiszUstawienie("WedkiWCenie", ustWedkiWCenie.ToString());
+        Db.ZapiszUstawienie("CenaDodatkowaWedka", ustCenaDodWedka.ToString("0"));
+        Svc.OdswiezUstawienia();
+        zapisanoUst = true;
+    }
+
+    private record ContainerRect(double X, double Y, double W, double H);
+}
