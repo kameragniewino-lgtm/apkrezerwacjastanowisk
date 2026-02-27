@@ -283,6 +283,12 @@ public sealed class BazaDanych : IDisposable
         return lista;
     }
 
+    public bool MaPozycje()
+    {
+        using var cmd = Cmd("SELECT COUNT(*) FROM PozycjeStanowisk");
+        return Convert.ToInt64(cmd.ExecuteScalar()!) > 0;
+    }
+
     public void ZapiszPozycje(List<Stanowisko> stanowiska)
     {
         using var t = _conn.BeginTransaction();

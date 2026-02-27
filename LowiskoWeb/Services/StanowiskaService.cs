@@ -21,6 +21,12 @@ public class StanowiskaService
     {
         _db = db;
         Utworz();
+
+        // Jeśli baza nie ma pozycji — zapisz domyślne
+        if (!_db.MaPozycje())
+            _db.ZapiszPozycje(Stanowiska);
+
+        // Zawsze czytaj pozycje z bazy (baza jest źródłem prawdy)
         _db.WczytajPozycje(Stanowiska);
         OdswiezUstawienia();
         OdswiezRezerwacje();
