@@ -1,0 +1,9 @@
+**/.vs
+**/bin
+**/obj
+**/*.db
+**/*.user
+.git
+.gitignore
+apkrezerwacjastanowisk/
+pkrezerwacjastanowisk/
