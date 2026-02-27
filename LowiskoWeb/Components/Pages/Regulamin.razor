@@ -1,14 +1,13 @@
 @page "/regulamin"
-@using LowiskoWeb.Services
-@inject BazaDanych Db
 
 <div class="page-regulamin">
-    <h2>📜 Regulamin łowiska</h2>
+    <h2>📜 Regulamin lowiska Gniewino</h2>
 
     <div class="regulamin-tresc">
-        @foreach (var punkt in zasady)
+        @for (int i = 0; i < zasady.Count; i++)
         {
-            <div class="regulamin-punkt">@punkt</div>
+            var nr = i + 1;
+            <div class="regulamin-punkt">@nr. @zasady[i]</div>
         }
     </div>
 </div>
@@ -18,23 +17,30 @@
 
     protected override void OnInitialized()
     {
-        var tresc = Db.PobierzUstawienie("Regulamin", domyslny);
-        zasady = tresc.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+        zasady = Domyslne();
     }
 
-    private const string domyslny = @"1. Wędkowanie dozwolone wyłącznie na wykupionym stanowisku.
-2. Każdy wędkarz musi posiadać ważną kartę wędkarską.
-3. Na jednym stanowisku mogą przebywać max. 3 osoby łowiące.
-4. Obowiązuje cisza nocna od 22:00 do 6:00.
-5. Złowione ryby poniżej wymiarów ochronnych należy niezwłocznie wypuścić.
-6. Zakaz używania prądu, materiałów wybuchowych i trucizn.
-7. Każdy wędkarz odpowiada za czystość swojego stanowiska.
-8. Śmieci należy zabrać ze sobą lub wyrzucić do wyznaczonych pojemników.
-9. Parkowanie pojazdów wyłącznie w wyznaczonych miejscach.
-10. Rozpalanie ognisk dozwolone tylko w wyznaczonych miejscach.
-11. Dzieci poniżej 14 lat mogą łowić tylko pod opieką osoby dorosłej.
-12. Właściciel łowiska nie odpowiada za rzeczy pozostawione bez opieki.
-13. W razie problemów prosimy o kontakt z obsługą łowiska.
-14. Rezerwację można odwołać najpóźniej 24h przed przyjazdem.
-15. Nieprzestrzeganie regulaminu skutkuje usunięciem z łowiska bez zwrotu opłaty.";
+    private static List<string> Domyslne() =>
+    [
+        "Lowisko jest obiektem prywatnym - wedkowanie wylacznie za oplata na wykupionym stanowisku.",
+        "Wedkarz musi posiadac wazna karte wedkarska (nie dotyczy osob do 14 roku zycia lowiących pod opieka).",
+        "Rezerwacja stanowiska jest wymagana - brak rezerwacji = brak gwarancji miejsca.",
+        "Na jednym stanowisku moga lowic maksymalnie 2 osoby + 1 osoba towarzyszaca (nie lowiaca).",
+        "W cenie stanowiska zawarte sa 2 wedki. Kazda dodatkowa wedka wymaga doplaty zgodnie z cennikiem.",
+        "Dozwolone metody: splawikowa, gruntowa, feederowa, spinningowa. Zakaz metody kuszowej i sieciowej.",
+        "Obowiazuje zasada zlow i wypusc dla ryb ponizej wymiarow ochronnych.",
+        "Gatunki ryb w lowisku: karp, lin, amur, szczupak, sandacz, okon, ploc, karas, leszcz.",
+        "Obowiazuje cisza nocna od 22:00 do 5:00 - zakaz glosnej muzyki i halasu.",
+        "Kazdy wedkarz odpowiada za porzadek na swoim stanowisku - smieci zabieramy ze soba!",
+        "Zakaz mycia pojazdow, naczyn i sprzetu w wodzie lowiska.",
+        "Zakaz kapieli i puszczania zwierzat do wody.",
+        "Rozpalanie ognisk i grilli dozwolone wylacznie w wyznaczonych miejscach.",
+        "Parkowanie pojazdow wylacznie na wyznaczonym parkingu (bezplatny).",
+        "Dzieci ponizej 14 lat moga przebywac na stanowisku wylacznie pod opieka osoby doroslej.",
+        "Rezerwacje mozna odwolac bezplatnie na 24h przed terminem. Pozniejsze odwolanie = brak zwrotu.",
+        "Wlasciciel lowiska nie ponosi odpowiedzialnosci za rzeczy pozostawione bez opieki.",
+        "Nieprzestrzeganie regulaminu skutkuje natychmiastowym usunieciem z lowiska bez zwrotu oplaty.",
+        "Wszelkie uszkodzenia mienia lowiska nalezy zglosic obsludze i pokryc koszty naprawy.",
+        "Wchodzac na teren lowiska, akceptujesz niniejszy regulamin."
+    ];
 }
