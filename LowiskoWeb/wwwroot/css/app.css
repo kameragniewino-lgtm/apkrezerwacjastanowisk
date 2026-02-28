@@ -533,14 +533,45 @@ a:hover { text-decoration: underline; }
 }
 
 /* ====== RESPONSYWNOŚĆ ====== */
+
+/* Mobile: info popup po kliknięciu stanowiska */
+.info-mobile-overlay { display: none; }
+.info-box-desktop { display: block; }
+
 @media (max-width: 768px) {
     .top-nav { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #2d5016; padding: 10px; z-index: 99; }
     .top-bar.open .top-nav { display: flex; }
     .hamburger { display: block; }
 
     .page-wrap { flex-direction: column; height: auto; }
-    .panel-left { width: 100% !important; min-width: 0 !important; max-height: 40vh; border-right: none; border-bottom: 2px solid #333; }
-    .mapa-scroll { height: 60vh; }
+    .panel-left { width: 100% !important; min-width: 0 !important; max-height: none; border-right: none; border-bottom: 2px solid #333; padding: 10px; }
+    .info-box-desktop { display: none !important; }
+    .panel-left .hint { display: none; }
+    .mapa-scroll { height: 55vh; }
+
+    .info-mobile-overlay {
+        display: flex !important;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7); z-index: 200;
+        align-items: flex-end; justify-content: center;
+    }
+    .info-mobile-popup {
+        background: #222; border-radius: 16px 16px 0 0;
+        padding: 16px; width: 100%; max-height: 80vh;
+        overflow-y: auto; position: relative;
+        animation: slideUp 0.25s ease-out;
+    }
+    .info-mobile-close {
+        position: absolute; top: 10px; right: 14px;
+        background: #444; border: none; color: #fff;
+        width: 32px; height: 32px; border-radius: 50%;
+        font-size: 1rem; cursor: pointer; z-index: 1;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
 
     .kontakt-grid { grid-template-columns: 1fr; }
     .dash-row { grid-template-columns: 1fr; }

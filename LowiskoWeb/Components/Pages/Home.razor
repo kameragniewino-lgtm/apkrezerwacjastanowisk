@@ -58,79 +58,8 @@
 
         @if (wybrane != null)
         {
-            <div class="info-box">
-                <h4>Stanowisko nr @wybrane.Numer</h4>
-                @{
-                    var statusDzis = wybrane.StatusDnia(wybranyDzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
-                    var rez = wybrane.RezerwacjaDnia(wybranyDzien);
-                }
-                @if (statusDzis == "pelne")
-                {
-                    <p class="status-zajete">🔴 ZAJĘTE cały dzień</p>
-                    @if (rez != null)
-                    {
-                        <p>@rez.TypPobytu · @rez.DataOd.ToString("dd.MM") @rez.GodzinaOd.ToString("HH:mm") → @rez.DataDo.ToString("dd.MM") @rez.GodzinaDo.ToString("HH:mm")</p>
-                    }
-                }
-                else if (statusDzis == "dzien")
-                {
-                    <p class="status-czesciowe">☀️ Dzień zajęty — 🌙 nocka wolna!</p>
-                    <button class="btn-rezerwuj" @onclick='() => OtworzFormularzTyp("Nocka")'>🌙 Zarezerwuj nockę</button>
-                }
-                else if (statusDzis == "nocka")
-                {
-                    <p class="status-czesciowe">🌙 Nocka zajęta — ☀️ dzień wolny!</p>
-                    <button class="btn-rezerwuj" @onclick='() => OtworzFormularzTyp("Dzień")'>☀️ Zarezerwuj dzień</button>
-                }
-                else
-                {
-                    <p class="status-wolne">🟢 WOLNE</p>
-                    <button class="btn-rezerwuj" @onclick="OtworzFormularz">Zarezerwuj</button>
-                }
-
-                <div class="mini-kal">
-                    <div class="mini-kal-nav">
-                        <button class="mini-kal-btn" @onclick="PoprzedniMiesiac">◀</button>
-                        <div class="mini-kal-title">@kalMiesiac.ToString("MMMM yyyy")</div>
-                        <button class="mini-kal-btn" @onclick="NastepnyMiesiac">▶</button>
-                    </div>
-                    <div class="mini-kal-header">
-                        <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>Sb</div><div>Nd</div>
-                    </div>
-                    <div class="mini-kal-grid">
-                        @{
-                            var pierwszy = new DateTime(kalMiesiac.Year, kalMiesiac.Month, 1);
-                            int offset = ((int)pierwszy.DayOfWeek + 6) % 7;
-                            int dniWMiesiacu = DateTime.DaysInMonth(kalMiesiac.Year, kalMiesiac.Month);
-                        }
-                        @for (int i = 0; i < offset; i++)
-                        {
-                            <div class="mini-kal-day empty"></div>
-                        }
-                        @for (int d = 1; d <= dniWMiesiacu; d++)
-                        {
-                            var dzien = new DateTime(kalMiesiac.Year, kalMiesiac.Month, d);
-                            var st = wybrane.StatusDnia(dzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
-                            bool dzisiaj = dzien == DateTime.Today;
-                            bool wybrany = dzien.Date == wybranyDzien.Date;
-                            bool przeszly = dzien < DateTime.Today;
-                            <div class="mini-kal-day kal-@st @(dzisiaj ? "today" : "") @(wybrany ? "picked" : "") @(przeszly ? "past" : "")"
-                                 @onclick="() => KliknijDzien(dzien)"
-                                 title="@st">
-                                @d
-                                @if (st == "dzien") { <span class="kal-icon">☀️</span> }
-                                @if (st == "nocka") { <span class="kal-icon">🌙</span> }
-                            </div>
-                        }
-                    </div>
-                    <div class="mini-kal-legend">
-                        <div class="mini-kal-leg-item"><div class="dot green"></div> Wolne</div>
-                        <div class="mini-kal-leg-item">☀️ Dzień zajęty</div>
-                        <div class="mini-kal-leg-item">🌙 Noc zajęta</div>
-                        <div class="mini-kal-leg-item"><div class="dot red"></div> Pełne</div>
-                    </div>
-                    <p class="mini-kal-hint">Kliknij dzień aby zarezerwować</p>
-                </div>
+            <div class="info-box info-box-desktop">
+                @InfoBoxContent()
             </div>
         }
         else
@@ -155,6 +84,17 @@
         </div>
     </div>
 </div>
+
+@* Mobile popup po kliknieciu stanowiska *@
+@if (wybrane != null)
+{
+    <div class="info-mobile-overlay" @onclick="() => wybrane = null">
+        <div class="info-mobile-popup" @onclick:stopPropagation="true">
+            <button class="info-mobile-close" @onclick="() => wybrane = null">✕</button>
+            @InfoBoxContent()
+        </div>
+    </div>
+}
 
 @if (pokazFormularz)
 {
@@ -372,6 +312,81 @@
         wybrane = st;
         kalMiesiac = new DateTime(wybranyDzien.Year, wybranyDzien.Month, 1, 0, 0, 0);
     }
+
+    private RenderFragment InfoBoxContent() => __builder =>
+    {
+        if (wybrane == null) return;
+        var statusDzis = wybrane.StatusDnia(wybranyDzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+        var rez = wybrane.RezerwacjaDnia(wybranyDzien);
+
+        <h4>Stanowisko nr @wybrane.Numer</h4>
+        @if (statusDzis == "pelne")
+        {
+            <p class="status-zajete">🔴 ZAJĘTE cały dzień</p>
+            @if (rez != null)
+            {
+                <p>@rez.TypPobytu · @rez.DataOd.ToString("dd.MM") @rez.GodzinaOd.ToString("HH:mm") → @rez.DataDo.ToString("dd.MM") @rez.GodzinaDo.ToString("HH:mm")</p>
+            }
+        }
+        else if (statusDzis == "dzien")
+        {
+            <p class="status-czesciowe">☀️ Dzień zajęty — 🌙 nocka wolna!</p>
+            <button class="btn-rezerwuj" @onclick='() => OtworzFormularzTyp("Nocka")'>🌙 Zarezerwuj nockę</button>
+        }
+        else if (statusDzis == "nocka")
+        {
+            <p class="status-czesciowe">🌙 Nocka zajęta — ☀️ dzień wolny!</p>
+            <button class="btn-rezerwuj" @onclick='() => OtworzFormularzTyp("Dzień")'>☀️ Zarezerwuj dzień</button>
+        }
+        else
+        {
+            <p class="status-wolne">🟢 WOLNE</p>
+            <button class="btn-rezerwuj" @onclick="OtworzFormularz">Zarezerwuj</button>
+        }
+
+        <div class="mini-kal">
+            <div class="mini-kal-nav">
+                <button class="mini-kal-btn" @onclick="PoprzedniMiesiac">◀</button>
+                <div class="mini-kal-title">@kalMiesiac.ToString("MMMM yyyy")</div>
+                <button class="mini-kal-btn" @onclick="NastepnyMiesiac">▶</button>
+            </div>
+            <div class="mini-kal-header">
+                <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>Sb</div><div>Nd</div>
+            </div>
+            <div class="mini-kal-grid">
+                @{
+                    var pierwszy = new DateTime(kalMiesiac.Year, kalMiesiac.Month, 1);
+                    int offset = ((int)pierwszy.DayOfWeek + 6) % 7;
+                    int dniWMiesiacu = DateTime.DaysInMonth(kalMiesiac.Year, kalMiesiac.Month);
+                }
+                @for (int i = 0; i < offset; i++)
+                {
+                    <div class="mini-kal-day empty"></div>
+                }
+                @for (int d = 1; d <= dniWMiesiacu; d++)
+                {
+                    var dzien = new DateTime(kalMiesiac.Year, kalMiesiac.Month, d);
+                    var stKal = wybrane.StatusDnia(dzien, Svc.DomyslnaGodzinaOd, Svc.DomyslnaGodzinaDo);
+                    bool dzisiaj = dzien == DateTime.Today;
+                    bool wybrany = dzien.Date == wybranyDzien.Date;
+                    bool przeszly = dzien < DateTime.Today;
+                    <div class="mini-kal-day kal-@stKal @(dzisiaj ? "today" : "") @(wybrany ? "picked" : "") @(przeszly ? "past" : "")"
+                         @onclick="() => KliknijDzien(dzien)"
+                         title="@stKal">
+                        @d
+                        @if (stKal == "dzien") { <span class="kal-icon">☀️</span> }
+                        @if (stKal == "nocka") { <span class="kal-icon">🌙</span> }
+                    </div>
+                }
+            </div>
+            <div class="mini-kal-legend">
+                <div class="mini-kal-leg-item"><div class="dot green"></div> Wolne</div>
+                <div class="mini-kal-leg-item">☀️ Dzień</div>
+                <div class="mini-kal-leg-item">🌙 Noc</div>
+                <div class="mini-kal-leg-item"><div class="dot red"></div> Pełne</div>
+            </div>
+        </div>
+    };
 
     // Mini kalendarz
     private DateTime kalMiesiac = new(DateTime.Today.Year, DateTime.Today.Month, 1);
