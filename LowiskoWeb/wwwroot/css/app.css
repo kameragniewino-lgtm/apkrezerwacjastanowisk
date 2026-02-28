@@ -560,4 +560,4 @@ a:hover { text-decoration: underline; }
 .gal-karta-info { flex: 1; min-width: 0; }
 .gal-karta-opis { font-weight: bold; color: #ddd; font-size: 0.9rem; }
 .gal-karta-url { font-size: 0.72rem; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gal-usun { flex-shrink: 0; }
+.gal-usun, .gal-edytuj { flex-shrink: 0; padding: 6px 10px !important; font-size: 0.85rem; }

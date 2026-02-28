@@ -347,13 +347,30 @@ else
                     }
                     @foreach (var foto in adminGaleria)
                     {
+                        var f = foto;
                         <div class="gal-karta">
-                            <img src="@foto.Url" alt="@foto.Opis" />
+                            <img src="@f.Url" alt="@f.Opis" />
                             <div class="gal-karta-info">
-                                <div class="gal-karta-opis">@foto.Opis</div>
-                                <div class="gal-karta-url">@foto.Url</div>
+                                @if (edytowaneId == f.Id)
+                                {
+                                    <input @bind="edytowanyUrl" placeholder="URL" style="margin-bottom:4px" />
+                                    <input @bind="edytowanyOpis" placeholder="Opis" />
+                                    <div style="margin-top:4px;display:flex;gap:6px">
+                                        <button class="btn-rezerwuj" style="padding:4px 10px;font-size:0.8rem" @onclick="ZapiszEdycjeZdjecia">💾</button>
+                                        <button class="btn-cancel" style="padding:4px 10px;font-size:0.8rem" @onclick="() => edytowaneId = null">Anuluj</button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="gal-karta-opis">@f.Opis</div>
+                                    <div class="gal-karta-url">@f.Url</div>
+                                }
                             </div>
-                            <button class="btn-cancel gal-usun" @onclick="() => UsunZdjecie(foto.Id)">🗑️</button>
+                            @if (edytowaneId != f.Id)
+                            {
+                                <button class="btn-moje gal-edytuj" @onclick="() => RozpocznijEdycje(f.Id, f.Url, f.Opis)">✏️</button>
+                                <button class="btn-cancel gal-usun" @onclick="() => UsunZdjecie(f.Id)">🗑️</button>
+                            }
                         </div>
                     }
                 </div>
@@ -401,6 +418,9 @@ else
     private List<(int Id, string Url, string Opis)> adminGaleria = [];
     private string noweZdjecieUrl = "";
     private string noweZdjecieOpis = "";
+    private int? edytowaneId;
+    private string edytowanyUrl = "";
+    private string edytowanyOpis = "";
 
     private IEnumerable<Rezerwacja> Filtrowane =>
         string.IsNullOrWhiteSpace(szukaj)
@@ -527,6 +547,21 @@ else
     private void UsunZdjecie(int id)
     {
         Db.UsunZdjecie(id);
+        WczytajGalerie();
+    }
+
+    private void RozpocznijEdycje(int id, string url, string opis)
+    {
+        edytowaneId = id;
+        edytowanyUrl = url;
+        edytowanyOpis = opis;
+    }
+
+    private void ZapiszEdycjeZdjecia()
+    {
+        if (edytowaneId == null || string.IsNullOrWhiteSpace(edytowanyUrl)) return;
+        Db.EdytujZdjecie(edytowaneId.Value, edytowanyUrl.Trim(), edytowanyOpis.Trim());
+        edytowaneId = null;
         WczytajGalerie();
     }
 
