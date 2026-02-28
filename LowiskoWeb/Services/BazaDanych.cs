@@ -92,6 +92,12 @@ public sealed class BazaDanych : IDisposable
                     Klucz TEXT PRIMARY KEY,
                     Wartosc TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS Galeria (
+                    Id SERIAL PRIMARY KEY,
+                    Url TEXT NOT NULL,
+                    Opis TEXT NOT NULL DEFAULT '',
+                    Kolejnosc INTEGER NOT NULL DEFAULT 0
+                );
             ");
         }
         else
@@ -120,6 +126,12 @@ public sealed class BazaDanych : IDisposable
                 CREATE TABLE IF NOT EXISTS Ustawienia (
                     Klucz TEXT PRIMARY KEY,
                     Wartosc TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS Galeria (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Url TEXT NOT NULL,
+                    Opis TEXT NOT NULL DEFAULT '',
+                    Kolejnosc INTEGER NOT NULL DEFAULT 0
                 );
             ");
             // Migracje SQLite
@@ -314,6 +326,43 @@ public sealed class BazaDanych : IDisposable
         while (r.Read()) dict[r.GetInt32(0)] = (r.GetDouble(1), r.GetDouble(2));
         foreach (var st in stanowiska)
             if (dict.TryGetValue(st.Numer, out var p)) { st.X = p.x; st.Y = p.y; }
+    }
+
+    // === GALERIA ===
+
+    public List<(int Id, string Url, string Opis)> PobierzGalerie()
+    {
+        using var cmd = Cmd("SELECT Id, Url, Opis FROM Galeria ORDER BY Kolejnosc, Id");
+        using var r = cmd.ExecuteReader();
+        var lista = new List<(int, string, string)>();
+        while (r.Read()) lista.Add((r.GetInt32(0), r.GetString(1), r.GetString(2)));
+        return lista;
+    }
+
+    public int DodajZdjecie(string url, string opis)
+    {
+        using var cmd = Cmd(_isPg
+            ? "INSERT INTO Galeria (Url, Opis) VALUES (@u, @o) RETURNING Id"
+            : "INSERT INTO Galeria (Url, Opis) VALUES (@u, @o); SELECT last_insert_rowid();");
+        Param(cmd, "@u", url);
+        Param(cmd, "@o", opis);
+        return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    public void UsunZdjecie(int id)
+    {
+        using var cmd = Cmd("DELETE FROM Galeria WHERE Id = @id");
+        Param(cmd, "@id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void EdytujZdjecie(int id, string url, string opis)
+    {
+        using var cmd = Cmd("UPDATE Galeria SET Url = @u, Opis = @o WHERE Id = @id");
+        Param(cmd, "@u", url);
+        Param(cmd, "@o", opis);
+        Param(cmd, "@id", id);
+        cmd.ExecuteNonQuery();
     }
 
     public void Dispose() { _conn.Close(); _conn.Dispose(); }

@@ -30,6 +30,8 @@ else
                 <button class="tab-btn @(zakladka == 4 ? "active" : "")" @onclick="() => ZmienZakladke(4)">📊 Dashboard</button>
                 <button class="tab-btn @(zakladka == 2 ? "active" : "")" @onclick="() => ZmienZakladke(2)">📈 Kalendarz</button>
                 <button class="tab-btn @(zakladka == 1 ? "active" : "")" @onclick="() => ZmienZakladke(1)">📍 Edycja mapy</button>
+                <button class="tab-btn @(zakladka == 5 ? "active" : "")" @onclick="() => ZmienZakladke(5)">📜 Regulamin</button>
+                <button class="tab-btn @(zakladka == 6 ? "active" : "")" @onclick="() => ZmienZakladke(6)">📸 Galeria</button>
                 <button class="tab-btn @(zakladka == 3 ? "active" : "")" @onclick="() => ZmienZakladke(3)">⚙️ Ustawienia</button>
                 <button class="btn-cancel" @onclick="Wyloguj">Wyloguj</button>
             </div>
@@ -304,6 +306,60 @@ else
                 </div>
             </div>
         }
+
+        @if (zakladka == 5)
+        {
+            <div class="admin-regulamin">
+                <h3>📜 Edycja regulaminu</h3>
+                <p class="hint">Kazdy wiersz = jeden punkt regulaminu. Zapisz, a zmiana pojawi sie od razu na stronie.</p>
+                <textarea class="regulamin-textarea" @bind="regulaminTekst" rows="22"></textarea>
+                <div class="settings-btns" style="margin-top:10px">
+                    <button class="btn-rezerwuj" @onclick="ZapiszRegulamin">💾 Zapisz regulamin</button>
+                    @if (zapisanoReg) { <span class="saved-msg">✅ Zapisano!</span> }
+                </div>
+            </div>
+        }
+
+        @if (zakladka == 6)
+        {
+            <div class="admin-galeria">
+                <h3>📸 Galeria - zarzadzanie zdjeciami</h3>
+
+                <div class="gal-dodaj">
+                    <h4>Dodaj nowe zdjecie</h4>
+                    <div class="form-row">
+                        <div class="form-col" style="flex:2">
+                            <label>URL zdjecia:</label>
+                            <input @bind="noweZdjecieUrl" placeholder="https://..." />
+                        </div>
+                        <div class="form-col" style="flex:1">
+                            <label>Opis:</label>
+                            <input @bind="noweZdjecieOpis" placeholder="Opis zdjecia" />
+                        </div>
+                    </div>
+                    <button class="btn-rezerwuj" style="margin-top:8px" @onclick="DodajZdjecie">➕ Dodaj</button>
+                </div>
+
+                <div class="gal-lista">
+                    @if (adminGaleria.Count == 0)
+                    {
+                        <p class="hint">Brak zdjec w galerii. Dodaj pierwsze!</p>
+                    }
+                    @foreach (var foto in adminGaleria)
+                    {
+                        <div class="gal-karta">
+                            <img src="@foto.Url" alt="@foto.Opis" />
+                            <div class="gal-karta-info">
+                                <div class="gal-karta-opis">@foto.Opis</div>
+                                <div class="gal-karta-url">@foto.Url</div>
+                            </div>
+                            <button class="btn-cancel gal-usun" @onclick="() => UsunZdjecie(foto.Id)">🗑️</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
     </div>
 }
 
@@ -337,6 +393,15 @@ else
     private bool zapisano;
     private ElementReference mapaRef;
 
+    // Regulamin
+    private string regulaminTekst = "";
+    private bool zapisanoReg;
+
+    // Galeria admin
+    private List<(int Id, string Url, string Opis)> adminGaleria = [];
+    private string noweZdjecieUrl = "";
+    private string noweZdjecieOpis = "";
+
     private IEnumerable<Rezerwacja> Filtrowane =>
         string.IsNullOrWhiteSpace(szukaj)
             ? rezerwacje
@@ -362,7 +427,15 @@ else
 
     private void Wyloguj() { zalogowany = false; login = ""; haslo = ""; }
     private void Odswiez() => rezerwacje = Svc.WszystkieRezerwacje();
-    private void ZmienZakladke(int z) { zakladka = z; zapisano = false; if (z == 0) Odswiez(); }
+    private void ZmienZakladke(int z)
+    {
+        zakladka = z;
+        zapisano = false;
+        zapisanoReg = false;
+        if (z == 0) Odswiez();
+        if (z == 5) WczytajRegulamin();
+        if (z == 6) WczytajGalerie();
+    }
 
     private void Usun(int id) { Svc.Usun(id); Odswiez(); }
 
@@ -422,6 +495,39 @@ else
         Db.ZapiszUstawienie("CenaDodatkowaWedka", ustCenaDodWedka.ToString("0"));
         Svc.OdswiezUstawienia();
         zapisanoUst = true;
+    }
+
+    // === REGULAMIN ===
+    private void WczytajRegulamin()
+    {
+        regulaminTekst = Db.PobierzUstawienie("Regulamin", "");
+    }
+
+    private void ZapiszRegulamin()
+    {
+        Db.ZapiszUstawienie("Regulamin", regulaminTekst);
+        zapisanoReg = true;
+    }
+
+    // === GALERIA ===
+    private void WczytajGalerie()
+    {
+        adminGaleria = Db.PobierzGalerie();
+    }
+
+    private void DodajZdjecie()
+    {
+        if (string.IsNullOrWhiteSpace(noweZdjecieUrl)) return;
+        Db.DodajZdjecie(noweZdjecieUrl.Trim(), noweZdjecieOpis.Trim());
+        noweZdjecieUrl = "";
+        noweZdjecieOpis = "";
+        WczytajGalerie();
+    }
+
+    private void UsunZdjecie(int id)
+    {
+        Db.UsunZdjecie(id);
+        WczytajGalerie();
     }
 
     private record ContainerRect(double X, double Y, double W, double H);

@@ -1,4 +1,6 @@
 @page "/regulamin"
+@using LowiskoWeb.Services
+@inject BazaDanych Db
 
 <div class="page-regulamin">
     <h2>📜 Regulamin lowiska Gniewino</h2>
@@ -17,7 +19,11 @@
 
     protected override void OnInitialized()
     {
-        zasady = Domyslne();
+        var zBazy = Db.PobierzUstawienie("Regulamin", "");
+        if (!string.IsNullOrWhiteSpace(zBazy))
+            zasady = zBazy.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+        else
+            zasady = Domyslne();
     }
 
     private static List<string> Domyslne() =>
