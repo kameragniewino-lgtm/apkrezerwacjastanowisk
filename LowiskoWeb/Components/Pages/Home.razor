@@ -69,20 +69,6 @@
     </div>
 
     <div class="mapa-scroll">
-        <div class="mobile-topbar">
-            @if (pogoda != null)
-            {
-                <div class="mob-pogoda">
-                    <span>@PogodaIkona(pogoda.AktualnyKod)</span>
-                    <span>@pogoda.Temperatura°C</span>
-                    <span>💨@pogoda.Wiatr</span>
-                </div>
-            }
-            <div class="mob-stats">
-                <span class="mob-stat"><b>@wolne</b> wolne</span>
-                <span class="mob-stat"><b>@(Svc.Stanowiska.Count - wolne)</b> zajęte</span>
-            </div>
-        </div>
         <div class="mapa-wrap">
             <img src="images/mapa.png" class="mapa-img" draggable="false" />
             @foreach (var st in Svc.Stanowiska)
@@ -100,7 +86,7 @@
 </div>
 
 @* Mobile popup po kliknieciu stanowiska *@
-@if (wybrane != null)
+@if (wybrane != null && !pokazFormularz && !pokazPotwierdzenie && !pokazMoje)
 {
     <div class="info-mobile-overlay" @onclick="() => wybrane = null">
         <div class="info-mobile-popup" @onclick:stopPropagation="true">
