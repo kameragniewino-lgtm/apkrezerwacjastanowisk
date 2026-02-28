@@ -1,12 +1,35 @@
 @page "/"
 @using LowiskoWeb.Models
 @using LowiskoWeb.Services
+@using System.Net.Http.Json
 @inject StanowiskaService Svc
 @inject IJSRuntime JS
+@inject IHttpClientFactory HttpFactory
 
 <div class="page-wrap">
     <div class="panel-left">
-        <div id="pogoda-home" class="pogoda-home-box"></div>
+        <div class="pogoda-home-box">
+            @if (pogoda != null)
+            {
+                <div class="pogoda-home-now">
+                    <div class="pogoda-home-ico">@PogodaIkona(pogoda.AktualnyKod)</div>
+                    <div class="pogoda-home-info">
+                        <div class="pogoda-home-temp">@pogoda.Temperatura°C</div>
+                        <div class="pogoda-home-wiatr">💨 @pogoda.Wiatr km/h · Gniewino</div>
+                    </div>
+                </div>
+                <div class="pogoda-home-dni">
+                    @foreach (var d in pogoda.Dni)
+                    {
+                        <div class="pogoda-home-d">
+                            <span class="pogoda-home-dn">@d.Dzien</span>
+                            <span>@PogodaIkona(d.Kod)</span>
+                            <span class="pogoda-home-mm">@d.Max°/@d.Min°</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
 
         <div class="panel-top-btns">
             <button class="btn-moje" @onclick="() => pokazMoje = true">📱 Moje rezerwacje</button>
@@ -475,5 +498,99 @@
         ostatniaRez = nowaRez;
         pokazFormularz = false;
         pokazPotwierdzenie = true;
+    }
+
+    // === POGODA ===
+    private PogodaDane? pogoda;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ZaladujPogode();
+        }
+    }
+
+    private async Task ZaladujPogode()
+    {
+        try
+        {
+            var http = HttpFactory.CreateClient();
+            var resp = await http.GetFromJsonAsync<PogodaResponse>(
+                "https://api.open-meteo.com/v1/forecast?latitude=54.6122&longitude=18.0823&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Europe/Warsaw&forecast_days=4");
+            if (resp?.current != null && resp.daily != null)
+            {
+                var dniNazwy = new[] { "Nd", "Pn", "Wt", "Sr", "Cz", "Pt", "Sb" };
+                var dane = new PogodaDane
+                {
+                    Temperatura = (int)Math.Round(resp.current.temperature_2m),
+                    AktualnyKod = resp.current.weathercode,
+                    Wiatr = (int)Math.Round(resp.current.windspeed_10m),
+                    Dni = []
+                };
+                for (int i = 0; i < resp.daily.time.Length && i < 4; i++)
+                {
+                    var dt = DateTime.Parse(resp.daily.time[i]);
+                    dane.Dni.Add(new PogodaDzien
+                    {
+                        Dzien = dniNazwy[(int)dt.DayOfWeek],
+                        Kod = resp.daily.weathercode[i],
+                        Max = (int)Math.Round(resp.daily.temperature_2m_max[i]),
+                        Min = (int)Math.Round(resp.daily.temperature_2m_min[i])
+                    });
+                }
+                pogoda = dane;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch { }
+    }
+
+    private static string PogodaIkona(int kod) => kod switch
+    {
+        0 => "☀️", 1 => "🌤️", 2 => "⛅", 3 => "☁️",
+        45 or 48 => "🌫️",
+        51 or 53 or 55 or 80 => "🌦️",
+        61 or 63 or 65 or 81 or 82 => "🌧️",
+        71 or 73 or 75 => "🌨️",
+        95 or 96 or 99 => "⛈️",
+        _ => "🌡️"
+    };
+
+    private class PogodaDane
+    {
+        public int Temperatura { get; set; }
+        public int AktualnyKod { get; set; }
+        public int Wiatr { get; set; }
+        public List<PogodaDzien> Dni { get; set; } = [];
+    }
+
+    private class PogodaDzien
+    {
+        public string Dzien { get; set; } = "";
+        public int Kod { get; set; }
+        public int Max { get; set; }
+        public int Min { get; set; }
+    }
+
+    private class PogodaResponse
+    {
+        public PogodaCurrent? current { get; set; }
+        public PogodaDaily? daily { get; set; }
+    }
+
+    private class PogodaCurrent
+    {
+        public double temperature_2m { get; set; }
+        public int weathercode { get; set; }
+        public double windspeed_10m { get; set; }
+    }
+
+    private class PogodaDaily
+    {
+        public string[] time { get; set; } = [];
+        public double[] temperature_2m_max { get; set; } = [];
+        public double[] temperature_2m_min { get; set; } = [];
+        public int[] weathercode { get; set; } = [];
     }
 }

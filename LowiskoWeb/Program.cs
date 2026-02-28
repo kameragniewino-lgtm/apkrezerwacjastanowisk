@@ -7,6 +7,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddSingleton<BazaDanych>();
 builder.Services.AddSingleton<StanowiskaService>();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
