@@ -116,11 +116,11 @@
             <div class="form-row">
                 <div class="form-col">
                     <label>Od:</label>
-                    <input type="date" @bind="frmOd" @bind:after="PrzeliczCene" />
+                    <input type="date" @bind="frmOd" @bind:after="PoprawDaty" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="form-col">
                     <label>Do:</label>
-                    <input type="date" @bind="frmDo" @bind:after="PrzeliczCene" />
+                    <input type="date" @bind="frmDo" @bind:after="PoprawDaty" min="@frmOd.ToString("yyyy-MM-dd")" />
                 </div>
             </div>
             <div class="form-row">
@@ -473,6 +473,13 @@
 
     private void ZamknijFormularz() => pokazFormularz = false;
 
+    private void PoprawDaty()
+    {
+        if (frmOd < DateTime.Today) frmOd = DateTime.Today;
+        if (frmDo < frmOd) frmDo = frmOd;
+        PrzeliczCene();
+    }
+
     private void SzukajMoich()
     {
         var tel = mojTelefon.Trim().Replace(" ", "");
@@ -498,6 +505,12 @@
         }
 
         if (wybrane == null) return;
+
+        if (frmOd < DateTime.Today)
+        {
+            bladRez = "Nie można rezerwować w przeszłości!";
+            return;
+        }
 
         if (frmDo < frmOd) frmDo = frmOd;
 
