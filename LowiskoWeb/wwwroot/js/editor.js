@@ -20,10 +20,10 @@ window.mapaEditor = {
                 h += '<div class="pogoda-home-ico">' + ico + '</div>';
                 h += '<div class="pogoda-home-info">';
                 h += '<div class="pogoda-home-temp">' + Math.round(cur.temperature_2m) + '°C</div>';
-                h += '<div class="pogoda-home-wiatr">💨 ' + Math.round(cur.windspeed_10m) + ' km/h</div>';
+                h += '<div class="pogoda-home-wiatr">💨 ' + Math.round(cur.windspeed_10m) + ' km/h · Gniewino</div>';
                 h += '</div></div>';
                 h += '<div class="pogoda-home-dni">';
-                for (let i = 1; i < 4; i++) {
+                for (let i = 0; i < 4; i++) {
                     const dt = new Date(d.daily.time[i]);
                     const dn = dni[dt.getDay()];
                     const ic2 = codes[d.daily.weathercode[i]] || '🌡️';

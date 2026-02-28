@@ -6,6 +6,8 @@
 
 <div class="page-wrap">
     <div class="panel-left">
+        <div id="pogoda-home" class="pogoda-home-box"></div>
+
         <div class="panel-top-btns">
             <button class="btn-moje" @onclick="() => pokazMoje = true">📱 Moje rezerwacje</button>
         </div>
@@ -23,10 +25,6 @@
                 <div class="stat-val">@Svc.Stanowiska.Count</div>
                 <div class="stat-label">łącznie</div>
             </div>
-        </div>
-
-        <div id="pogoda-home" class="pogoda-home-box">
-            <div class="pogoda-home-loading">🌤️ Pogoda...</div>
         </div>
 
         <div class="legenda">
