@@ -59,6 +59,24 @@ a:hover { text-decoration: underline; }
 .stat-val { font-size: 1.4rem; font-weight: bold; color: #8f8; }
 .stat-label { font-size: 0.65rem; color: #666; text-transform: uppercase; }
 
+/* Pogoda strona glowna */
+.pogoda-home-box {
+    background: linear-gradient(135deg, #1a2a3a, #1a2535); border: 1px solid #2a3a4a;
+    border-radius: 10px; padding: 10px; margin-bottom: 10px;
+}
+.pogoda-home-loading { text-align: center; color: #668; font-size: 0.8rem; padding: 4px; }
+.pogoda-home-now { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.pogoda-home-ico { font-size: 2rem; }
+.pogoda-home-temp { font-size: 1.3rem; font-weight: bold; color: #fff; }
+.pogoda-home-wiatr { font-size: 0.75rem; color: #8ab; }
+.pogoda-home-dni { display: flex; gap: 4px; }
+.pogoda-home-d {
+    flex: 1; background: #1e2e3e; border-radius: 6px; padding: 5px 2px;
+    text-align: center; font-size: 0.72rem; display: flex; flex-direction: column; gap: 2px;
+}
+.pogoda-home-dn { color: #6a8; font-weight: bold; font-size: 0.65rem; }
+.pogoda-home-mm { color: #aac; font-size: 0.68rem; }
+
 /* Potwierdzenie */
 .potw-modal { text-align: center; }
 .potw-header { font-size: 1.3rem; font-weight: bold; color: #5f5; margin-bottom: 10px; }
