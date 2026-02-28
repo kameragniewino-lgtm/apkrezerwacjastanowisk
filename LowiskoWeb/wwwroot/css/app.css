@@ -537,36 +537,72 @@ a:hover { text-decoration: underline; }
 /* Mobile: info popup po kliknięciu stanowiska */
 .info-mobile-overlay { display: none; }
 .info-box-desktop { display: block; }
+.mobile-topbar { display: none; }
 
 @media (max-width: 768px) {
     .top-nav { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #2d5016; padding: 10px; z-index: 99; }
     .top-bar.open .top-nav { display: flex; }
     .hamburger { display: block; }
 
-    .page-wrap { flex-direction: column; height: auto; }
-    .panel-left { width: 100% !important; min-width: 0 !important; max-height: none; border-right: none; border-bottom: 2px solid #333; padding: 10px; }
+    /* Jedna karta: mapa na gorze, panel pod spodem */
+    .page-wrap { flex-direction: column-reverse; height: calc(100vh - 52px); overflow: hidden; }
+    .panel-left {
+        width: 100% !important; min-width: 0 !important;
+        border-right: none; padding: 8px 10px;
+        max-height: none; overflow-y: auto;
+        flex: 0 0 auto;
+    }
+    /* Ukryj elementy ktore sa w mobile-topbar */
+    .panel-left .pogoda-home-box,
+    .panel-left .stats-bar,
+    .panel-left .legenda { display: none; }
     .info-box-desktop { display: none !important; }
     .panel-left .hint { display: none; }
-    .mapa-scroll { height: 55vh; }
+    .panel-left .panel-top-btns { margin: 0; }
 
+    .mapa-scroll { flex: 1; height: auto; min-height: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+    .mapa-scroll .mapa-wrap { flex: 1; overflow: auto; }
+
+    /* Kompaktowy pasek mobilny nad mapa */
+    .mobile-topbar {
+        display: flex; align-items: center; gap: 6px;
+        background: #1a1a1a; padding: 6px 10px;
+        border-bottom: 1px solid #333; flex-shrink: 0;
+    }
+    .mobile-topbar .mob-pogoda {
+        display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #ccc;
+    }
+    .mobile-topbar .mob-stats {
+        display: flex; gap: 8px; margin-left: auto; font-size: 0.72rem;
+    }
+    .mobile-topbar .mob-stat { color: #999; }
+    .mobile-topbar .mob-stat b { color: #8f8; }
+
+    /* Bottom sheet po kliknieciu stanowiska */
     .info-mobile-overlay {
         display: flex !important;
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.7); z-index: 200;
+        background: rgba(0,0,0,0.6); z-index: 200;
         align-items: flex-end; justify-content: center;
     }
     .info-mobile-popup {
-        background: #222; border-radius: 16px 16px 0 0;
-        padding: 16px; width: 100%; max-height: 80vh;
+        background: #222; border-radius: 14px 14px 0 0;
+        padding: 14px 14px 20px; width: 100%; max-height: 75vh;
         overflow-y: auto; position: relative;
-        animation: slideUp 0.25s ease-out;
+        animation: slideUp 0.2s ease-out;
+    }
+    .info-mobile-popup::before {
+        content: ''; display: block; width: 40px; height: 4px;
+        background: #555; border-radius: 2px; margin: 0 auto 10px;
     }
     .info-mobile-close {
-        position: absolute; top: 10px; right: 14px;
+        position: absolute; top: 10px; right: 12px;
         background: #444; border: none; color: #fff;
-        width: 32px; height: 32px; border-radius: 50%;
-        font-size: 1rem; cursor: pointer; z-index: 1;
+        width: 30px; height: 30px; border-radius: 50%;
+        font-size: 0.9rem; cursor: pointer; z-index: 1;
     }
+    .info-mobile-popup h4 { font-size: 1rem; margin-bottom: 4px; }
+    .info-mobile-popup .mini-kal { margin-top: 10px; }
 
     @keyframes slideUp {
         from { transform: translateY(100%); }
