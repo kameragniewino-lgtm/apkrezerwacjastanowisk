@@ -241,10 +241,8 @@
                         }
                     </select>
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-col">
-                    <label>Osoba towarzysząca:</label>
+                    <label>Osoba tow.:</label>
                     <label class="toggle-label">
                         <input type="checkbox" @bind="frmOsobaTow" @bind:after="PrzeliczCene" />
                         <span>@(frmOsobaTow ? "Tak" : "Nie")</span>
@@ -531,9 +529,12 @@
     // === POGODA ===
     private PogodaDane? pogoda;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await ZaladujPogode();
+        if (firstRender)
+        {
+            await ZaladujPogode();
+        }
     }
 
     private async Task ZaladujPogode()
@@ -567,6 +568,7 @@
                     });
                 }
                 pogoda = dane;
+                await InvokeAsync(StateHasChanged);
             }
         }
         catch { }

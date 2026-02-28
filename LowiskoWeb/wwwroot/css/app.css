@@ -82,21 +82,21 @@ a:hover { text-decoration: underline; }
 /* Pogoda w formularzu rezerwacji */
 .frm-pogoda {
     background: linear-gradient(135deg, #1a2a3a, #1a2535);
-    border: 1px solid #2a3a4a; border-radius: 10px;
-    padding: 10px 12px; margin: 10px 0;
+    border: 1px solid #2a3a4a; border-radius: 8px;
+    padding: 8px 10px; margin: 4px 0;
 }
-.frm-pogoda-header { font-size: 0.78rem; color: #8ab; font-weight: bold; margin-bottom: 8px; }
-.frm-pogoda-dni { display: flex; gap: 5px; flex-wrap: wrap; }
+.frm-pogoda-header { font-size: 0.72rem; color: #8ab; font-weight: bold; margin-bottom: 5px; }
+.frm-pogoda-dni { display: flex; gap: 4px; overflow-x: auto; }
 .frm-pogoda-d {
-    flex: 1; min-width: 60px; max-width: 90px;
-    background: #1e2e3e; border-radius: 8px; padding: 6px 4px;
-    text-align: center; display: flex; flex-direction: column; gap: 2px;
+    flex: 0 0 auto; min-width: 52px;
+    background: #1e2e3e; border-radius: 6px; padding: 4px 3px;
+    text-align: center; display: flex; flex-direction: column; gap: 1px;
 }
-.frm-pogoda-data { font-size: 0.62rem; color: #6a8; font-weight: bold; }
-.frm-pogoda-ico { font-size: 1.3rem; line-height: 1.2; }
-.frm-pogoda-temp { font-size: 0.75rem; font-weight: bold; color: #dde; }
-.frm-pogoda-deszcz { font-size: 0.6rem; color: #68a; }
-.frm-pogoda-hint { font-size: 0.65rem; color: #556; margin-top: 6px; text-align: center; }
+.frm-pogoda-data { font-size: 0.58rem; color: #6a8; font-weight: bold; }
+.frm-pogoda-ico { font-size: 1.1rem; line-height: 1.1; }
+.frm-pogoda-temp { font-size: 0.68rem; font-weight: bold; color: #dde; }
+.frm-pogoda-deszcz { font-size: 0.55rem; color: #68a; }
+.frm-pogoda-hint { font-size: 0.6rem; color: #556; margin-top: 4px; text-align: center; }
 
 /* Potwierdzenie */
 .potw-modal { text-align: center; }
@@ -215,38 +215,39 @@ a:hover { text-decoration: underline; }
     display: flex; align-items: center; justify-content: center; z-index: 100;
 }
 .modal {
-    background: #2a2a2a; border-radius: 12px; padding: 24px; width: 380px;
-    display: flex; flex-direction: column; gap: 10px;
+    background: #2a2a2a; border-radius: 12px; padding: 18px; width: 380px;
+    max-height: 88vh; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 7px;
 }
-.modal h3 { color: #8f8; margin-bottom: 4px; }
-.modal label { font-size: 0.85rem; color: #aaa; }
-.modal input { padding: 8px 12px; border-radius: 6px; border: 1px solid #555; background: #333; color: #fff; font-size: 1rem; }
+.modal h3 { color: #8f8; margin-bottom: 2px; font-size: 1.05rem; }
+.modal label { font-size: 0.8rem; color: #aaa; margin-bottom: -2px; }
+.modal input { padding: 6px 10px; border-radius: 6px; border: 1px solid #555; background: #333; color: #fff; font-size: 0.9rem; }
 .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
 
 .btn-rezerwuj {
-    padding: 10px 24px; background: #28a830; color: #fff; border: none;
-    border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;
+    padding: 8px 20px; background: #28a830; color: #fff; border: none;
+    border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer;
 }
 .btn-rezerwuj:hover { background: #32c23a; }
 .btn-cancel {
-    padding: 10px 24px; background: #555; color: #fff; border: none;
+    padding: 8px 20px; background: #555; color: #fff; border: none;
     border-radius: 8px; cursor: pointer;
 }
-.form-row { display: flex; gap: 10px; }
-.form-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.form-col input, .form-col select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #555; background: #333; color: #fff; font-size: 1rem; }
-.toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 0; }
-.toggle-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: #28a830; }
+.form-row { display: flex; gap: 8px; }
+.form-col { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.form-col input, .form-col select { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid #555; background: #333; color: #fff; font-size: 0.9rem; }
+.toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0; }
+.toggle-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #28a830; }
 .cena-box {
     background: #1a3a1a; border: 1px solid #2a5; border-radius: 8px;
-    padding: 10px 14px; font-size: 1.1rem; color: #8f8; text-align: center;
+    padding: 8px 12px; font-size: 1rem; color: #8f8; text-align: center;
 }
-.cena-szczegoly { font-size: 0.72rem; color: #6a6; margin-top: 4px; }
+.cena-szczegoly { font-size: 0.68rem; color: #6a6; margin-top: 3px; }
 .cena-szczegoly span { margin-left: 4px; }
-.typ-btns { display: flex; gap: 6px; margin-bottom: 8px; }
+.typ-btns { display: flex; gap: 5px; margin-bottom: 4px; }
 .typ-btn {
-    flex: 1; padding: 10px; border: 2px solid #444; background: #2a2a2a;
-    color: #aaa; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+    flex: 1; padding: 7px; border: 2px solid #444; background: #2a2a2a;
+    color: #aaa; border-radius: 8px; cursor: pointer; font-size: 0.82rem;
     text-align: center; transition: all 0.15s;
 }
 .typ-btn:hover { border-color: #666; color: #fff; }
