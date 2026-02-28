@@ -79,6 +79,25 @@ a:hover { text-decoration: underline; }
 .pogoda-home-dn { color: #6a8; font-weight: bold; font-size: 0.65rem; }
 .pogoda-home-mm { color: #aac; font-size: 0.68rem; }
 
+/* Pogoda w formularzu rezerwacji */
+.frm-pogoda {
+    background: linear-gradient(135deg, #1a2a3a, #1a2535);
+    border: 1px solid #2a3a4a; border-radius: 10px;
+    padding: 10px 12px; margin: 10px 0;
+}
+.frm-pogoda-header { font-size: 0.78rem; color: #8ab; font-weight: bold; margin-bottom: 8px; }
+.frm-pogoda-dni { display: flex; gap: 5px; flex-wrap: wrap; }
+.frm-pogoda-d {
+    flex: 1; min-width: 60px; max-width: 90px;
+    background: #1e2e3e; border-radius: 8px; padding: 6px 4px;
+    text-align: center; display: flex; flex-direction: column; gap: 2px;
+}
+.frm-pogoda-data { font-size: 0.62rem; color: #6a8; font-weight: bold; }
+.frm-pogoda-ico { font-size: 1.3rem; line-height: 1.2; }
+.frm-pogoda-temp { font-size: 0.75rem; font-weight: bold; color: #dde; }
+.frm-pogoda-deszcz { font-size: 0.6rem; color: #68a; }
+.frm-pogoda-hint { font-size: 0.65rem; color: #556; margin-top: 6px; text-align: center; }
+
 /* Potwierdzenie */
 .potw-modal { text-align: center; }
 .potw-header { font-size: 1.3rem; font-weight: bold; color: #5f5; margin-bottom: 10px; }

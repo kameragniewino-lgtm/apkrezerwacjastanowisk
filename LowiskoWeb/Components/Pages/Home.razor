@@ -19,7 +19,7 @@
                     </div>
                 </div>
                 <div class="pogoda-home-dni">
-                    @foreach (var d in pogoda.Dni)
+                    @foreach (var d in pogoda.Dni.Take(4))
                     {
                         <div class="pogoda-home-d">
                             <span class="pogoda-home-dn">@d.Dzien</span>
@@ -193,6 +193,34 @@
                     <input type="time" @bind="frmGodzDo" @bind:after="PrzeliczCene" />
                 </div>
             </div>
+
+            @{
+                var progDni = PobierzPrognoze();
+            }
+            @if (progDni.Count > 0)
+            {
+                <div class="frm-pogoda">
+                    <div class="frm-pogoda-header">🌤️ Pogoda w terminie</div>
+                    <div class="frm-pogoda-dni">
+                        @foreach (var d in progDni)
+                        {
+                            <div class="frm-pogoda-d">
+                                <div class="frm-pogoda-data">@d.Dzien @d.Data.ToString("dd.MM")</div>
+                                <div class="frm-pogoda-ico">@PogodaIkona(d.Kod)</div>
+                                <div class="frm-pogoda-temp">@d.Max° / @d.Min°</div>
+                                @if (d.Opady > 0)
+                                {
+                                    <div class="frm-pogoda-deszcz">💧@d.Opady.ToString("0.#")mm</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    @if (frmDo.Date >= DateTime.Today.AddDays(16))
+                    {
+                        <div class="frm-pogoda-hint">Prognoza dostepna do 16 dni</div>
+                    }
+                </div>
+            }
 
             <div class="form-row">
                 <div class="form-col">
@@ -517,7 +545,7 @@
         {
             var http = HttpFactory.CreateClient();
             var resp = await http.GetFromJsonAsync<PogodaResponse>(
-                "https://api.open-meteo.com/v1/forecast?latitude=54.6122&longitude=18.0823&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Europe/Warsaw&forecast_days=4");
+                "https://api.open-meteo.com/v1/forecast?latitude=54.6122&longitude=18.0823&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Europe/Warsaw&forecast_days=16");
             if (resp?.current != null && resp.daily != null)
             {
                 var dniNazwy = new[] { "Nd", "Pn", "Wt", "Sr", "Cz", "Pt", "Sb" };
@@ -528,15 +556,17 @@
                     Wiatr = (int)Math.Round(resp.current.windspeed_10m),
                     Dni = []
                 };
-                for (int i = 0; i < resp.daily.time.Length && i < 4; i++)
+                for (int i = 0; i < resp.daily.time.Length; i++)
                 {
                     var dt = DateTime.Parse(resp.daily.time[i]);
                     dane.Dni.Add(new PogodaDzien
                     {
+                        Data = DateOnly.FromDateTime(dt),
                         Dzien = dniNazwy[(int)dt.DayOfWeek],
                         Kod = resp.daily.weathercode[i],
                         Max = (int)Math.Round(resp.daily.temperature_2m_max[i]),
-                        Min = (int)Math.Round(resp.daily.temperature_2m_min[i])
+                        Min = (int)Math.Round(resp.daily.temperature_2m_min[i]),
+                        Opady = resp.daily.precipitation_sum.Length > i ? resp.daily.precipitation_sum[i] : 0
                     });
                 }
                 pogoda = dane;
@@ -557,6 +587,14 @@
         _ => "🌡️"
     };
 
+    private List<PogodaDzien> PobierzPrognoze()
+    {
+        if (pogoda == null) return [];
+        var od = DateOnly.FromDateTime(frmOd);
+        var do_ = DateOnly.FromDateTime(frmDo);
+        return pogoda.Dni.Where(d => d.Data >= od && d.Data <= do_).ToList();
+    }
+
     private class PogodaDane
     {
         public int Temperatura { get; set; }
@@ -567,10 +605,12 @@
 
     private class PogodaDzien
     {
+        public DateOnly Data { get; set; }
         public string Dzien { get; set; } = "";
         public int Kod { get; set; }
         public int Max { get; set; }
         public int Min { get; set; }
+        public double Opady { get; set; }
     }
 
     private class PogodaResponse
@@ -592,5 +632,6 @@
         public double[] temperature_2m_max { get; set; } = [];
         public double[] temperature_2m_min { get; set; } = [];
         public int[] weathercode { get; set; } = [];
+        public double[] precipitation_sum { get; set; } = [];
     }
 }
