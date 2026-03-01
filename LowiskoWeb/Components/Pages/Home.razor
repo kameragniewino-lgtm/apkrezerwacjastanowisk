@@ -101,10 +101,10 @@
     <div class="modal-bg" @onclick="ZamknijFormularz">
         <div class="modal" @onclick:stopPropagation="true">
             <h3>Rezerwacja stanowiska nr @wybrane!.Numer</h3>
-            <label>Imię i nazwisko:</label>
+            <label>Imię i nazwisko: <span style="color:#f55">*</span></label>
             <input @bind="frmNazwa" @bind:event="oninput" placeholder="Jan Kowalski" />
-            <label>Telefon:</label>
-            <input @bind="frmTelefon" @bind:event="oninput" placeholder="123 456 789" />
+            <label>Telefon: <span style="color:#f55">*</span></label>
+            <input @bind="frmTelefon" @bind:event="oninput" placeholder="123 456 789" required />
 
             <label>Typ pobytu:</label>
             <div class="typ-btns">
@@ -501,6 +501,12 @@
         if (string.IsNullOrWhiteSpace(frmNazwa))
         {
             bladRez = "Wpisz imię i nazwisko!";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(frmTelefon))
+        {
+            bladRez = "Wpisz numer telefonu!";
             return;
         }
 
